@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tribune — Classement, Pronos &amp; Mercato</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#0B1F17;
+    --panel:#12291F;
+    --panel2:#1B382A;
+    --line:#2C4F3D;
+    --text:#F2F5EC;
+    --muted:#86A992;
+    --accent:#D4FF3D;
+    --accent-dim:#9FCB2E;
+    --warn:#FF6B4A;
+    --gold:#FFD166;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, rgba(212,255,61,0.06), transparent 40%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 78px),
+      var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  .display{
+    font-family:"Arial Narrow","Helvetica Neue Condensed",Arial,sans-serif;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 18px;}
+
+  /* ---- Header ---- */
+  header{
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(27,56,42,0.6), transparent);
+    padding:26px 0 0 0;
+  }
+  .brand{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .brand h1{
+    font-size:clamp(28px,5vw,42px);
+    margin:0;
+    line-height:0.95;
+  }
+  .brand h1 span{color:var(--accent);}
+  .brand .tag{color:var(--muted);font-size:13px;margin-top:4px;}
+  .pseudo-badge{
+    display:flex;align-items:center;gap:8px;
+    background:var(--panel2);border:1px solid var(--line);
+    padding:8px 14px;border-radius:999px;font-size:13px;color:var(--muted);
+  }
+  .pseudo-badge b{color:var(--accent);font-weight:700;}
+  .pseudo-badge button{
+    background:none;border:none;color:var(--muted);text-decoration:underline;
+    cursor:pointer;font-size:12px;padding:0;
+  }
+
+  nav.tabs{
+    display:flex;gap:2px;margin-top:22px;border-bottom:1px solid var(--line);
+    overflow-x:auto;
+  }
+  nav.tabs button{
+    flex:0 0 auto;
+    background:none;border:none;color:var(--muted);
+    padding:14px 18px;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:14px;
+    text-transform:uppercase;letter-spacing:0.04em;
+    border-bottom:3px solid transparent;
+    transition:color .15s, border-color .15s;
+    white-space:nowrap;
+  }
+  nav.tabs button.active{color:var(--accent);border-color:var(--accent);}
+  nav.tabs button:hover{color:var(--text);}
+
+  main{padding-top:26px;}
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:18px;
+  }
+  .panel h2{
+    font-size:20px;margin:0 0 4px 0;
+  }
+  .panel .sub{color:var(--muted);font-size:13px;margin:0 0 16px 0;}
+
+  /* ---- Ligue 1 drag list ---- */
+  .btn{
+    background:var(--accent);color:#0B1F17;border:none;border-radius:8px;
+    padding:10px 16px;font-weight:800;cursor:pointer;font-size:13px;
+    text-transform:uppercase;letter-spacing:.03em;
+  }
+  .btn:hover{background:var(--accent-dim);}
+  .btn.ghost{background:none;border:1px solid var(--line);color:var(--muted);}
+  .btn.ghost:hover{color:var(--text);border-color:var(--muted);}
+
+  .pos-tag{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:26px;height:26px;flex:0 0 26px;
+    border-radius:6px;background:#0B1F17;color:var(--accent);
+    font-family:'Courier New',monospace;font-weight:800;font-size:13px;
+  }
+  .drag-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+  .drag-item{
+    display:flex;align-items:center;gap:12px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;cursor:grab;font-weight:600;font-size:14px;
+    touch-action:none;
+  }
+  .drag-item:active{cursor:grabbing;}
+  .drag-item .handle{color:var(--muted);font-size:15px;letter-spacing:-2px;user-select:none;cursor:grab;}
+  .drag-item .team-name{flex:1;}
+  .drag-item .stage-select{
+    background:#0B1F17;border:1px solid var(--line);color:var(--text);
+    padding:7px 10px;border-radius:7px;font-size:12px;font-family:inherit;
+    max-width:170px;flex:0 0 auto;
+  }
+  .stage-select.stage-vainqueur{border-color:var(--gold);color:var(--gold);}
+  .stage-select.stage-finaliste{border-color:var(--accent);color:var(--accent);}
+  .stage-select.stage-demi{border-color:var(--accent-dim);color:var(--accent-dim);}
+  .stage-select.stage-poules{border-color:var(--warn);color:var(--warn);}
+
+  .club-logo{
+    width:30px;height:30px;flex:0 0 auto;object-fit:contain;
+    background:#fff;border-radius:6px;padding:3px;margin-left:10px;
+  }
+  .club-logo-fallback{
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:800;color:#0B1F17;background:var(--accent);
+  }
+
+  .foreign-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;}
+  .foreign-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:16px;}
+  .foreign-card h3{margin:0 0 12px 0;font-size:15px;}
+  .foreign-pick{display:flex;align-items:center;gap:12px;}
+  .club-logo-big{width:48px;height:48px;margin-left:0;flex:0 0 48px;border-radius:8px;font-size:13px;}
+  .foreign-select{
+    flex:1;background:#0B1F17;border:1px solid var(--line);color:var(--text);
+    padding:9px 10px;border-radius:8px;font-size:13px;font-family:inherit;
+  }
+  .drag-item:nth-child(-n+3) .pos-tag{background:var(--accent);color:#0B1F17;}
+  .sortable-ghost{opacity:0.35;}
+  .sortable-chosen{border-color:var(--accent);}
+  .sortable-drag{box-shadow:0 8px 20px rgba(0,0,0,0.4);}
+
+  /* ---- CL predictions ---- */
+  .cl-score-banner{
+    display:flex;gap:18px;flex-wrap:wrap;margin-bottom:16px;
+  }
+  .stat-card{
+    background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+    padding:12px 18px;flex:1;min-width:130px;
+  }
+  .stat-card .num{font-family:'Courier New',monospace;font-weight:800;font-size:26px;color:var(--accent);}
+  .stat-card .lbl{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;}
+
+  details.matchday{
+    background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+    margin-bottom:8px;overflow:hidden;
+  }
+  details.matchday summary{
+    padding:12px 16px;cursor:pointer;font-weight:800;
+    display:flex;justify-content:space-between;align-items:center;
+    list-style:none;
+  }
+  details.matchday summary::-webkit-details-marker{display:none;}
+  details.matchday summary .md-pts{color:var(--accent);font-family:'Courier New',monospace;font-size:13px;}
+  .md-body{padding:0 14px 12px 14px;}
+
+  .match-row{
+    display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;
+    padding:9px 0;border-top:1px solid var(--line);font-size:13px;
+  }
+  .match-row .home{text-align:right;}
+  .match-row .away{text-align:left;}
+  .score-input-group{display:flex;align-items:center;gap:4px;justify-content:center;}
+  .digit{
+    width:32px;height:38px;text-align:center;background:#0B1F17;border:1px solid var(--line);
+    color:var(--accent);font-family:'Courier New',monospace;font-weight:800;font-size:18px;border-radius:5px;
+  }
+  .digit:disabled{opacity:0.9;color:var(--text);background:#0e241b;}
+  .dash{color:var(--muted);}
+  .valider-btn{
+    background:var(--accent);border:none;color:#0B1F17;font-weight:800;
+    border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;margin-left:6px;text-transform:uppercase;
+  }
+  .result-badge{
+    font-size:11px;padding:3px 8px;border-radius:6px;margin-left:6px;font-weight:800;
+  }
+  .result-badge.p3{background:var(--accent);color:#0B1F17;}
+  .result-badge.p1{background:#3E6B52;color:var(--text);}
+  .result-badge.p0{background:transparent;color:var(--muted);border:1px solid var(--line);}
+
+  table.leaderboard{width:100%;border-collapse:collapse;font-size:13px;margin-top:14px;}
+  table.leaderboard th,table.leaderboard td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;}
+  table.leaderboard th{color:var(--muted);text-transform:uppercase;font-size:11px;}
+  table.leaderboard td.rank{width:34px;font-family:'Courier New',monospace;font-weight:800;}
+  table.leaderboard tr:first-child td{color:var(--gold);}
+
+  /* ---- Mercato ---- */
+  .mercato-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;}
+  .mercato-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:16px;}
+  .mercato-card h3{margin:0 0 4px 0;font-size:15px;}
+  .mercato-card .desc{color:var(--muted);font-size:12px;margin-bottom:12px;}
+  .mercato-card input[type=text]{
+    width:100%;background:#0B1F17;border:1px solid var(--line);color:var(--text);
+    padding:9px 10px;border-radius:8px;font-size:13px;margin-bottom:8px;font-family:inherit;
+  }
+  .mercato-results{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+  .mercato-results .item{display:flex;justify-content:space-between;font-size:13px;background:#0B1F17;padding:6px 10px;border-radius:6px;}
+  .mercato-results .item .count{color:var(--accent);font-weight:800;font-family:'Courier New',monospace;}
+  .voted-tag{color:var(--accent-dim);font-size:11px;}
+
+  /* ---- Gate ---- */
+  #gate{
+    position:fixed;inset:0;background:rgba(11,31,23,0.92);z-index:50;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  #gate .box{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:32px;max-width:380px;width:100%;text-align:center;
+  }
+  #gate h2{margin-top:0;}
+  #gate p{color:var(--muted);font-size:13px;}
+  #gate input{
+    width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    padding:12px;border-radius:8px;font-size:15px;margin:14px 0;text-align:center;font-family:inherit;
+  }
+  .hidden{display:none !important;}
+  .note{color:var(--muted);font-size:12px;margin-top:10px;}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="box">
+    <h2 class="display">Entrez sur le terrain</h2>
+    <p>Choisis un pseudo pour établir le classement, pronostiquer la Ligue des champions et voter au mercato. Ce pseudo sera visible des autres participants.</p>
+    <input id="gate-input" type="text" placeholder="Ton pseudo" maxlength="24">
+    <button class="btn" id="gate-btn" style="width:100%;">C'est parti</button>
+  </div>
+</div>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <div>
+        <h1 class="display">Tribune<span>.</span></h1>
+        <p class="tag">Classement Ligue 1 · Pronostics C1 · Mercato</p>
+      </div>
+      <div class="pseudo-badge">
+        Connecté : <b id="pseudo-label">—</b>
+        <button id="change-pseudo">changer</button>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="l1">Classement Ligue 1</button>
+      <button class="tab-btn" data-tab="cl">Pronos Ligue des Champions</button>
+      <button class="tab-btn" data-tab="foreign">Pronos Championnats Étrangers</button>
+      <button class="tab-btn" data-tab="mercato">Mercato</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- LIGUE 1 TAB -->
+  <section id="tab-l1" class="tab-panel">
+    <div class="panel">
+      <h2>Classement — Ligue 1 2026/2027</h2>
+      <p class="sub">Fais glisser une équipe pour la repositionner. L'ordre est partagé : la dernière personne qui modifie le classement le met à jour pour tout le monde.</p>
+      <ul class="drag-list" id="l1-list"></ul>
+    </div>
+  </section>
+
+  <!-- CHAMPIONS LEAGUE TAB -->
+  <section id="tab-cl" class="tab-panel hidden">
+    <div class="panel">
+      <h2>Pronostics — Ligue des champions</h2>
+      <p class="sub">Pour chaque club, choisis le stade auquel tu penses qu'il sera éliminé (ou qu'il ira jusqu'au bout). Fais glisser un club pour réordonner la liste. Tout est partagé : la dernière modification compte pour tout le monde.</p>
+      <ul class="drag-list" id="cl-list"></ul>
+    </div>
+  </section>
+
+  <!-- FOREIGN LEAGUES TAB -->
+  <section id="tab-foreign" class="tab-panel hidden">
+    <div class="panel">
+      <h2>Pronos — Championnats étrangers</h2>
+      <p class="sub">Pour chaque championnat, choisis le club que tu vois champion. Un pronostic par championnat, partagé et modifiable à tout moment.</p>
+      <div class="foreign-grid" id="foreign-grid"></div>
+    </div>
+  </section>
+
+  <!-- MERCATO TAB -->
+  <section id="tab-mercato" class="tab-panel hidden">
+    <div class="panel">
+      <h2>Mercato — Les votes de la tribune</h2>
+      <p class="sub">Vote pour le meilleur buteur, le meilleur passeur et le flop du mercato de la saison. Un vote par catégorie, modifiable à tout moment.</p>
+      <div class="mercato-grid">
+        <div class="mercato-card">
+          <h3>⚽ Meilleur buteur</h3>
+          <div class="desc">Le joueur le plus prolifique devant le but.</div>
+          <input type="text" id="vote-buteur" placeholder="Nom du joueur">
+          <button class="btn" data-cat="buteur">Voter</button>
+          <div class="voted-tag" id="voted-buteur"></div>
+          <div class="mercato-results" id="results-buteur"></div>
+        </div>
+        <div class="mercato-card">
+          <h3>🎯 Meilleur passeur</h3>
+          <div class="desc">Le joueur qui a le plus régalé ses coéquipiers.</div>
+          <input type="text" id="vote-passeur" placeholder="Nom du joueur">
+          <button class="btn" data-cat="passeur">Voter</button>
+          <div class="voted-tag" id="voted-passeur"></div>
+          <div class="mercato-results" id="results-passeur"></div>
+        </div>
+        <div class="mercato-card">
+          <h3>📉 Flop du mercato</h3>
+          <div class="desc">La recrue la plus décevante de l'année.</div>
+          <input type="text" id="vote-flop" placeholder="Nom du joueur">
+          <button class="btn" data-cat="flop">Voter</button>
+          <div class="voted-tag" id="voted-flop"></div>
+          <div class="mercato-results" id="results-flop"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ===================== DATA ===================== */
+const L1_TEAMS = ["Angers SCO","AJ Auxerre","Stade Brestois 29","Le Havre AC","Le Mans FC","RC Lens","LOSC Lille","FC Lorient","Olympique Lyonnais","Olympique de Marseille","AS Monaco","OGC Nice","Paris FC","Paris Saint-Germain","Stade Rennais FC","RC Strasbourg","Toulouse FC","ESTAC Troyes"];
+
+const CL_STAGES = [
+  { key: "vainqueur", label: "Vainqueur" },
+  { key: "finaliste", label: "Finaliste" },
+  { key: "demi", label: "Demi-finaliste" },
+  { key: "quart", label: "Quart de finaliste" },
+  { key: "huitieme", label: "Huitieme de finaliste" },
+  { key: "barragiste", label: "Barragiste" },
+  { key: "poules", label: "Elimine en poules" }
+];
+
+const CL_PRIORITY = ["Paris Saint-Germain","Lille","Monaco","Brest","Real Madrid","Barcelona","Arsenal"];
+const CL_OTHERS = ["Manchester City","Bayern Munich","Liverpool","Inter Milan","Borussia Dortmund","RB Leipzig","Bayer Leverkusen","Atlético Madrid","Atalanta","Juventus","Benfica","Club Brugge","Shakhtar Donetsk","Milan","Feyenoord","Sporting CP","PSV Eindhoven","Dinamo Zagreb","Red Bull Salzburg","Red Star Belgrade","Young Boys","Celtic","Slovan Bratislava","Sparta Prague","Aston Villa","Bologna","Girona","VfB Stuttgart","Sturm Graz"];
+const CL_CLUBS = [...CL_PRIORITY, ...CL_OTHERS];
+
+/* ---- Club logos (via the open-source luukhopman/football-logos repo, served through jsDelivr) ---- */
+const LOGO_PATHS = {
+  // Ligue 1
+  "Angers SCO": "logos/France - Ligue 1/Angers SCO.png",
+  "AJ Auxerre": "logos/France - Ligue 1/AJ Auxerre.png",
+  "Stade Brestois 29": "logos/France - Ligue 1/Stade Brestois 29.png",
+  "Le Havre AC": "logos/France - Ligue 1/Le Havre AC.png",
+  "Le Mans FC": "logos/France - Ligue 1/Le Mans FC.png",
+  "RC Lens": "logos/France - Ligue 1/RC Lens.png",
+  "LOSC Lille": "logos/France - Ligue 1/LOSC Lille.png",
+  "FC Lorient": "logos/France - Ligue 1/FC Lorient.png",
+  "Olympique Lyonnais": "logos/France - Ligue 1/Olympique Lyon.png",
+  "Olympique de Marseille": "logos/France - Ligue 1/Olympique Marseille.png",
+  "AS Monaco": "logos/France - Ligue 1/AS Monaco.png",
+  "OGC Nice": "logos/France - Ligue 1/OGC Nice.png",
+  "Paris FC": "logos/France - Ligue 1/Paris FC.png",
+  "Paris Saint-Germain": "logos/France - Ligue 1/Paris Saint-Germain.png",
+  "Stade Rennais FC": "logos/France - Ligue 1/Stade Rennais FC.png",
+  "RC Strasbourg": "logos/France - Ligue 1/RC Strasbourg Alsace.png",
+  "Toulouse FC": "logos/France - Ligue 1/FC Toulouse.png",
+  "ESTAC Troyes": "logos/France - Ligue 1/ESTAC Troyes.png",
+  // Champions League clubs
+  "Lille": "logos/France - Ligue 1/LOSC Lille.png",
+  "Monaco": "logos/France - Ligue 1/AS Monaco.png",
+  "Brest": "logos/France - Ligue 1/Stade Brestois 29.png",
+  "Real Madrid": "logos/Spain - LaLiga/Real Madrid.png",
+  "Barcelona": "logos/Spain - LaLiga/FC Barcelona.png",
+  "Atlético Madrid": "logos/Spain - LaLiga/Atlético de Madrid.png",
+  "Girona": "history/2025-26/Spain - LaLiga/Girona FC.png",
+  "Arsenal": "logos/England - Premier League/Arsenal FC.png",
+  "Manchester City": "logos/England - Premier League/Manchester City.png",
+  "Liverpool": "logos/England - Premier League/Liverpool FC.png",
+  "Aston Villa": "logos/England - Premier League/Aston Villa.png",
+  "Bayern Munich": "logos/Germany - Bundesliga/Bayern Munich.png",
+  "Borussia Dortmund": "logos/Germany - Bundesliga/Borussia Dortmund.png",
+  "RB Leipzig": "logos/Germany - Bundesliga/RB Leipzig.png",
+  "Bayer Leverkusen": "logos/Germany - Bundesliga/Bayer 04 Leverkusen.png",
+  "VfB Stuttgart": "logos/Germany - Bundesliga/VfB Stuttgart.png",
+  "Inter Milan": "logos/Italy - Serie A/Inter Milan.png",
+  "Atalanta": "logos/Italy - Serie A/Atalanta BC.png",
+  "Juventus": "logos/Italy - Serie A/Juventus FC.png",
+  "Milan": "logos/Italy - Serie A/AC Milan.png",
+  "Bologna": "logos/Italy - Serie A/Bologna FC 1909.png",
+  "Benfica": "logos/Portugal - Liga Portugal/SL Benfica.png",
+  "Sporting CP": "logos/Portugal - Liga Portugal/Sporting CP.png",
+  "Club Brugge": "logos/Belgium - Jupiler Pro League/Club Brugge KV.png",
+  "Shakhtar Donetsk": "logos/Ukraine - Premier Liga/Shakhtar Donetsk.png",
+  "Feyenoord": "logos/Netherlands - Eredivisie/Feyenoord Rotterdam.png",
+  "PSV Eindhoven": "logos/Netherlands - Eredivisie/PSV Eindhoven.png",
+  "Dinamo Zagreb": "logos/Croatia - SuperSport HNL/GNK Dinamo Zagreb.png",
+  "Red Bull Salzburg": "logos/Austria - Bundesliga/Red Bull Salzburg.png",
+  "Sturm Graz": "logos/Austria - Bundesliga/SK Sturm Graz.png",
+  "Red Star Belgrade": "logos/Serbia - Super liga Srbije/Red Star Belgrade.png",
+  "Young Boys": "logos/Switzerland - Super League/BSC Young Boys.png",
+  "Celtic": "logos/Scotland - Scottish Premiership/Celtic FC.png",
+  "Sparta Prague": "logos/Czech Republic - Chance Liga/AC Sparta Prague.png"
+  // Slovan Bratislava: pas de logo disponible dans la source -> repli automatique sur les initiales
+};
+
+/* ---- Championnats étrangers 2026/2027 ---- */
+const FOREIGN_LEAGUE_FOLDERS = {
+  "premier-league": "England - Premier League",
+  "liga": "Spain - LaLiga",
+  "serie-a": "Italy - Serie A",
+  "bundesliga": "Germany - Bundesliga"
+};
+const FOREIGN_LEAGUES = [
+  { key: "premier-league", name: "Premier League", clubs: ["Arsenal FC","Aston Villa","AFC Bournemouth","Brentford FC","Brighton & Hove Albion","Chelsea FC","Coventry City","Crystal Palace","Everton FC","Fulham FC","Hull City","Ipswich Town","Leeds United","Liverpool FC","Manchester City","Manchester United","Newcastle United","Nottingham Forest","Sunderland AFC","Tottenham Hotspur"] },
+  { key: "liga", name: "Liga", clubs: ["Athletic Bilbao","Atlético de Madrid","CA Osasuna","Celta de Vigo","Deportivo A Coruña","Deportivo Alavés","Elche CF","FC Barcelona","Getafe CF","Levante UD","Málaga CF","RCD Espanyol Barcelona","Racing Santander","Rayo Vallecano","Real Betis Balompié","Real Madrid","Real Sociedad","Sevilla FC","Valencia CF","Villarreal CF"] },
+  { key: "serie-a", name: "Serie A", clubs: ["AC Milan","AC Monza","ACF Fiorentina","AS Roma","Atalanta BC","Bologna FC 1909","Cagliari Calcio","Como 1907","Frosinone Calcio","Genoa CFC","Inter Milan","Juventus FC","Parma Calcio 1913","SS Lazio","SSC Napoli","Torino FC","US Lecce","US Sassuolo","Udinese Calcio","Venezia FC"] },
+  { key: "bundesliga", name: "Bundesliga", clubs: ["1.FC Köln","1.FC Union Berlin","1.FSV Mainz 05","Bayer 04 Leverkusen","Bayern Munich","Borussia Dortmund","Borussia Mönchengladbach","Eintracht Frankfurt","FC Augsburg","FC Schalke 04","Hamburger SV","RB Leipzig","SC Freiburg","SC Paderborn 07","SV 07 Elversberg","SV Werder Bremen","TSG 1899 Hoffenheim","VfB Stuttgart"] }
+];
+FOREIGN_LEAGUES.forEach(l=>{
+  l.clubs.forEach(club=>{
+    LOGO_PATHS[club] = `logos/${FOREIGN_LEAGUE_FOLDERS[l.key]}/${club}.png`;
+  });
+});
+
+function logoUrl(team){
+  const rel = LOGO_PATHS[team];
+  if(!rel) return null;
+  return 'https://cdn.jsdelivr.net/gh/luukhopman/football-logos@master/' + rel.split('/').map(encodeURIComponent).join('/');
+}
+
+function logoImgHtml(team){
+  const url = logoUrl(team);
+  if(!url){
+    return `<span class="club-logo club-logo-fallback">${clubInitials(team)}</span>`;
+  }
+  return `<img class="club-logo" src="${url}" alt="" data-team="${team}" onerror="handleLogoError(this)">`;
+}
+
+function clubInitials(team){
+  return team.split(/\s+/).filter(w=>w.length>0).slice(0,3).map(w=>w[0]).join('').toUpperCase().slice(0,3) || '?';
+}
+
+function handleLogoError(img){
+  const span = document.createElement('span');
+  span.className = 'club-logo club-logo-fallback';
+  span.textContent = clubInitials(img.dataset.team || '');
+  img.replaceWith(span);
+}
+
+/* ===================== SUPABASE CONFIG ===================== */
+// 1. Crée un projet sur https://supabase.com
+// 2. Va dans Project Settings > API et copie l'URL et la clé "anon public"
+// 3. Colle-les ci-dessous
+const SUPABASE_URL = "https://tnfmjxhmfnxetafbbsbd.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRuZm1qeGhtZm54ZXRhZmJic2JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwMDE3OTksImV4cCI6MjEwMjU3Nzc5OX0.IPeYTCL2JdzqwykbMVbU62AgYhVfnvoB8j9jaHBo3O0";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ===================== STORAGE HELPERS (Supabase) ===================== */
+// Ces trois fonctions remplacent window.storage : toutes les données passent
+// par la table "app_storage" (voir README pour le script SQL de création).
+async function sGet(key){
+  const { data, error } = await sb.from('app_storage').select('value').eq('key', key).maybeSingle();
+  if(error){ console.error('sGet error', error); return null; }
+  return data ? data.value : null;
+}
+async function sSet(key, value){
+  const { error } = await sb.from('app_storage').upsert({ key, value, updated_at: new Date().toISOString() });
+  if(error){ console.error('sSet error', error); return false; }
+  return true;
+}
+async function sList(prefix){
+  const { data, error } = await sb.from('app_storage').select('key').like('key', prefix + '%');
+  if(error){ console.error('sList error', error); return []; }
+  return data.map(r => r.key);
+}
+
+/* ===================== STATE ===================== */
+let pseudo = null;
+
+/* ===================== GATE / PSEUDO ===================== */
+async function init(){
+  pseudo = localStorage.getItem('pseudo');
+  if(pseudo){ enterApp(); } else { document.getElementById('gate').classList.remove('hidden'); }
+}
+document.getElementById('gate-btn').addEventListener('click', async ()=>{
+  const v = document.getElementById('gate-input').value.trim();
+  if(!v){ return; }
+  pseudo = v.slice(0,24);
+  localStorage.setItem('pseudo', pseudo);
+  enterApp();
+});
+document.getElementById('gate-input').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('gate-btn').click(); });
+document.getElementById('change-pseudo').addEventListener('click', ()=>{
+  document.getElementById('gate-input').value = pseudo || '';
+  document.getElementById('gate').classList.remove('hidden');
+});
+
+async function enterApp(){
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('pseudo-label').textContent = pseudo;
+  await boot();
+}
+
+/* ===================== TABS ===================== */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.add('hidden'));
+    document.getElementById('tab-'+btn.dataset.tab).classList.remove('hidden');
+  });
+});
+
+/* ===================== BOOT ===================== */
+async function boot(){
+  await loadAndRenderL1();
+  await loadAndRenderCL();
+  await loadAndRenderForeign();
+  renderMercatoTab();
+}
+
+/* ===================== LIGUE 1 (drag-and-drop ranking) ===================== */
+let l1Order = [];
+let l1Sortable = null;
+
+async function loadAndRenderL1(){
+  l1Order = await sGet('l1_order', true);
+  if(!l1Order || l1Order.length !== L1_TEAMS.length || !L1_TEAMS.every(t=>l1Order.includes(t))){
+    l1Order = L1_TEAMS.slice();
+    await sSet('l1_order', l1Order, true);
+  }
+  renderL1List();
+  initL1Sortable();
+}
+
+function renderL1List(){
+  const ul = document.getElementById('l1-list');
+  ul.innerHTML = l1Order.map((team,i)=>`
+    <li class="drag-item" data-team="${team}">
+      <span class="pos-tag">${i+1}</span>
+      <span class="handle">⠿⠿</span>
+      <span class="team-name">${team}</span>
+      ${logoImgHtml(team)}
+    </li>`).join('');
+}
+
+function initL1Sortable(){
+  const ul = document.getElementById('l1-list');
+  if(l1Sortable){ l1Sortable.destroy(); }
+  l1Sortable = new Sortable(ul, {
+    animation:150,
+    ghostClass:'sortable-ghost',
+    chosenClass:'sortable-chosen',
+    dragClass:'sortable-drag',
+    onEnd: async ()=>{
+      const items = ul.querySelectorAll('.drag-item');
+      l1Order = Array.from(items).map(li=>li.dataset.team);
+      items.forEach((li,i)=>{ li.querySelector('.pos-tag').textContent = i+1; });
+      await sSet('l1_order', l1Order, true);
+    }
+  });
+}
+
+/* ===================== CHAMPIONS LEAGUE (parcours par club) ===================== */
+let clPicks = [];
+let clSortable = null;
+
+async function loadAndRenderCL(){
+  clPicks = await sGet('cl_stage_picks', true);
+  if(!clPicks || clPicks.length !== CL_CLUBS.length || !CL_CLUBS.every(t=>clPicks.some(p=>p.team===t))){
+    clPicks = CL_CLUBS.map(team => ({ team, stage: '' }));
+    await sSet('cl_stage_picks', clPicks, true);
+  }
+  renderCLList();
+  initCLSortable();
+}
+
+function renderCLList(){
+  const ul = document.getElementById('cl-list');
+  ul.innerHTML = clPicks.map((p)=>`
+    <li class="drag-item" data-team="${p.team}">
+      <span class="handle">⠿⠿</span>
+      ${logoImgHtml(p.team)}
+      <span class="team-name">${p.team}</span>
+      <select class="stage-select ${p.stage?'stage-'+p.stage:''}" data-team="${p.team}">
+        <option value="" ${p.stage===''?'selected':''}>— Choisir —</option>
+        ${CL_STAGES.map(s=>`<option value="${s.key}" ${p.stage===s.key?'selected':''}>${s.label}</option>`).join('')}
+      </select>
+    </li>`).join('');
+
+  ul.querySelectorAll('.stage-select').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      const team = sel.dataset.team;
+      const pick = clPicks.find(p=>p.team===team);
+      if(pick){ pick.stage = sel.value; }
+      sel.className = 'stage-select' + (sel.value ? ' stage-'+sel.value : '');
+      await sSet('cl_stage_picks', clPicks, true);
+    });
+  });
+}
+
+function initCLSortable(){
+  const ul = document.getElementById('cl-list');
+  if(clSortable){ clSortable.destroy(); }
+  clSortable = new Sortable(ul, {
+    animation:150,
+    handle:'.handle',
+    ghostClass:'sortable-ghost',
+    chosenClass:'sortable-chosen',
+    dragClass:'sortable-drag',
+    onEnd: async ()=>{
+      const items = ul.querySelectorAll('.drag-item');
+      const newOrder = Array.from(items).map(li=>li.dataset.team);
+      clPicks = newOrder.map(team => clPicks.find(p=>p.team===team));
+      await sSet('cl_stage_picks', clPicks, true);
+    }
+  });
+}
+
+/* ===================== CHAMPIONNATS ÉTRANGERS ===================== */
+let foreignPicks = {};
+
+async function loadAndRenderForeign(){
+  foreignPicks = (await sGet('foreign_champions', true)) || {};
+  renderForeignTab();
+}
+
+function renderForeignTab(){
+  const grid = document.getElementById('foreign-grid');
+  grid.innerHTML = FOREIGN_LEAGUES.map(l=>{
+    const picked = foreignPicks[l.key] || '';
+    return `
+    <div class="foreign-card">
+      <h3>${l.name}</h3>
+      <div class="foreign-pick">
+        ${picked ? logoImgHtmlBig(picked) : `<span class="club-logo club-logo-big club-logo-fallback">?</span>`}
+        <select class="foreign-select" data-league="${l.key}">
+          <option value="">— Choisir —</option>
+          ${l.clubs.map(c=>`<option value="${c}" ${picked===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.foreign-select').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      foreignPicks[sel.dataset.league] = sel.value;
+      await sSet('foreign_champions', foreignPicks, true);
+      renderForeignTab();
+    });
+  });
+}
+
+function logoImgHtmlBig(team){
+  const url = logoUrl(team);
+  if(!url){ return `<span class="club-logo club-logo-big club-logo-fallback">${clubInitials(team)}</span>`; }
+  return `<img class="club-logo club-logo-big" src="${url}" alt="" data-team="${team}" onerror="handleLogoError(this)">`;
+}
+
+/* ===================== MERCATO ===================== */
+function renderMercatoTab(){
+  document.querySelectorAll('.mercato-card button[data-cat]').forEach(btn=>{
+    btn.addEventListener('click', ()=> submitVote(btn.dataset.cat));
+  });
+  ['buteur','passeur','flop'].forEach(cat=> refreshMercatoCategory(cat));
+}
+
+async function submitVote(cat){
+  const input = document.getElementById('vote-'+cat);
+  const val = input.value.trim();
+  if(!val) return;
+  const my = (await sGet('mercato_'+pseudo, true)) || {};
+  my[cat] = val;
+  await sSet('mercato_'+pseudo, my, true);
+  input.value = '';
+  refreshMercatoCategory(cat);
+}
+
+async function refreshMercatoCategory(cat){
+  const keys = await sList('mercato_', true);
+  const counts = {};
+  let myVote = null;
+  for(const k of keys){
+    const v = await sGet(k, true);
+    if(!v || !v[cat]) continue;
+    const name = v[cat].trim();
+    const norm = name.toLowerCase();
+    counts[norm] = counts[norm] || {label:name, count:0};
+    counts[norm].count++;
+    if(k === 'mercato_'+pseudo) myVote = name;
+  }
+  const sorted = Object.values(counts).sort((a,b)=> b.count - a.count).slice(0,8);
+  document.getElementById('results-'+cat).innerHTML = sorted.length ? sorted.map(s=>`
+    <div class="item"><span>${s.label}</span><span class="count">${s.count}</span></div>
+  `).join('') : '<p class="sub" style="margin:4px 0 0 0;">Pas encore de votes.</p>';
+  document.getElementById('voted-'+cat).textContent = myVote ? `Ton vote actuel : ${myVote}` : '';
+}
+
+/* ===================== GO ===================== */
+init();
+</script>
+</body>
+</html>
