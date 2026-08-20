@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pronos Le Mans — Tribune</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#05080d;
+  --bg-2:#08111b;
+  --surface:#0b121c;
+  --surface-2:#101a27;
+  --surface-3:#142131;
+  --line:rgba(160,184,207,.14);
+  --line-strong:rgba(160,184,207,.24);
+  --text:#f5f8fc;
+  --muted:#8e9bab;
+  --muted-2:#647181;
+  --accent:#48e0b0;
+  --accent-2:#2fbf94;
+  --accent-soft:rgba(72,224,176,.12);
+  --blue:#5aa9ff;
+  --gold:#f6c86b;
+  --red:#ff6f72;
+  --shadow:0 24px 70px rgba(0,0,0,.34);
+  --radius:18px;
+  --radius-sm:12px;
+}
+
+*{box-sizing:border-box}
+html{margin:0;padding:0;scroll-behavior:smooth}
+body{
+  margin:0;
+  min-height:100vh;
+  padding-bottom:70px;
+  color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(900px 500px at 8% -5%,rgba(72,224,176,.10),transparent 60%),
+    radial-gradient(800px 520px at 95% 8%,rgba(57,130,255,.10),transparent 62%),
+    linear-gradient(145deg,#04070b 0%,#07101a 48%,#05090f 100%);
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.34;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.014) 1px,transparent 1px);
+  background-size:72px 72px;
+  mask-image:linear-gradient(to bottom,black,transparent 80%);
+}
+body::after{
+  content:"";
+  position:fixed;left:-15vw;bottom:-24vw;width:70vw;height:55vw;
+  border:1px solid rgba(72,224,176,.06);border-radius:50%;
+  transform:rotate(-8deg);pointer-events:none;z-index:-1;
+}
+
+.display{
+  font-family:"Arial Narrow","Roboto Condensed",Inter,sans-serif;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.045em;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+/* HEADER */
+header{
+  position:sticky;top:0;z-index:30;
+  border-bottom:1px solid var(--line);
+  background:rgba(5,8,13,.78);
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
+}
+header::after{
+  content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.35;
+}
+header>.wrap{padding-top:18px}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.brand>div:first-child{display:flex;align-items:center;gap:14px}
+.brand h1{
+  margin:0;font-size:clamp(27px,4vw,39px);line-height:.9;
+  letter-spacing:.06em;
+}
+.brand h1 span{color:var(--accent)}
+.brand .tag{
+  color:var(--muted);font-size:11px;margin:6px 0 0;
+  text-transform:uppercase;letter-spacing:.12em;
+}
+.brand>div:first-child::before{
+  content:"P";
+  width:42px;height:42px;display:grid;place-items:center;
+  border:1px solid rgba(72,224,176,.34);border-radius:13px;
+  color:var(--accent);font-weight:950;font-size:19px;
+  background:linear-gradient(145deg,rgba(72,224,176,.14),rgba(72,224,176,.025));
+  box-shadow:inset 0 0 30px rgba(72,224,176,.05),0 8px 30px rgba(0,0,0,.2);
+}
+.pseudo-badge{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.035);
+  border:1px solid var(--line);border-radius:999px;
+  padding:8px 12px;color:var(--muted);font-size:12px;
+}
+.pseudo-badge::before{
+  content:"";width:7px;height:7px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 12px rgba(72,224,176,.65);
+}
+.pseudo-badge b{color:var(--text);font-weight:750}
+.pseudo-badge button{
+  border:0;background:none;color:var(--muted);cursor:pointer;
+  font-size:11px;padding:0;text-decoration:none;
+}
+.pseudo-badge button:hover{color:var(--accent)}
+
+nav.tabs{
+  display:flex;gap:4px;margin-top:17px;
+  overflow-x:auto;scrollbar-width:none;
+}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{
+  flex:0 0 auto;position:relative;
+  background:none;border:0;color:var(--muted);
+  padding:13px 15px 14px;cursor:pointer;
+  font-family:inherit;font-weight:800;font-size:11px;
+  text-transform:uppercase;letter-spacing:.075em;
+  white-space:nowrap;transition:.2s ease;
+}
+nav.tabs button::after{
+  content:"";position:absolute;left:14px;right:14px;bottom:0;height:2px;
+  background:var(--accent);transform:scaleX(0);transform-origin:center;
+  transition:.2s ease;border-radius:4px;
+}
+nav.tabs button.active{color:var(--text)}
+nav.tabs button.active::after{transform:scaleX(1)}
+nav.tabs button:hover{color:var(--text)}
+
+/* MAIN */
+main{padding-top:30px}
+.tab-panel{animation:panelIn .28s ease}
+@keyframes panelIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+.panel{
+  position:relative;
+  background:linear-gradient(145deg,rgba(17,27,40,.91),rgba(8,14,22,.95));
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:26px;
+  margin-bottom:20px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.panel::before{
+  content:"";position:absolute;top:0;right:0;width:300px;height:180px;
+  background:radial-gradient(circle at top right,rgba(72,224,176,.09),transparent 68%);
+  pointer-events:none;
+}
+.panel::after{
+  content:"";position:absolute;top:0;left:28px;width:42px;height:2px;
+  background:var(--accent);box-shadow:0 0 18px rgba(72,224,176,.25);
+}
+.panel h2{position:relative;margin:0 0 7px;font-size:22px;letter-spacing:-.02em}
+.panel .sub{position:relative;color:var(--muted);font-size:12px;line-height:1.65;margin:0 0 20px;max-width:780px}
+
+/* BUTTONS / CONTROLS */
+.btn{
+  border:1px solid rgba(72,224,176,.45);
+  background:linear-gradient(135deg,#56e7b7,#36c99e);
+  color:#03110d;border-radius:10px;
+  padding:10px 15px;font-weight:900;cursor:pointer;font-size:11px;
+  text-transform:uppercase;letter-spacing:.07em;
+  box-shadow:0 8px 22px rgba(72,224,176,.10);
+  transition:transform .18s ease,filter .18s ease,box-shadow .18s ease;
+}
+.btn:hover{filter:brightness(1.07);transform:translateY(-1px);box-shadow:0 12px 28px rgba(72,224,176,.16)}
+.btn:active{transform:translateY(0)}
+.btn.ghost{background:transparent;border-color:var(--line-strong);color:var(--muted);box-shadow:none}
+.btn.ghost:hover{color:var(--text);border-color:rgba(255,255,255,.28)}
+
+/* RANKING */
+.drag-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.drag-item{
+  display:flex;align-items:center;gap:12px;
+  min-height:55px;padding:9px 12px;
+  background:linear-gradient(90deg,rgba(255,255,255,.035),rgba(255,255,255,.018));
+  border:1px solid var(--line);border-radius:12px;
+  cursor:grab;font-weight:650;font-size:13px;
+  touch-action:none;transition:border-color .18s,background .18s,transform .18s;
+}
+.drag-item:hover{border-color:var(--line-strong);background:rgba(255,255,255,.045)}
+.drag-item:active{cursor:grabbing}
+.drag-item .handle{
+  color:var(--muted-2);font-size:14px;letter-spacing:-2px;
+  user-select:none;cursor:grab;order:2;
+}
+.drag-item .team-name{flex:1;order:3}
+.pos-tag{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:31px;height:31px;flex:0 0 31px;border-radius:9px;
+  background:#070d14;color:var(--muted);border:1px solid var(--line);
+  font-family:"Roboto Mono",monospace;font-weight:900;font-size:11px;order:1;
+}
+.club-logo{
+  width:32px;height:32px;flex:0 0 32px;object-fit:contain;
+  background:rgba(255,255,255,.94);border-radius:9px;padding:4px;
+  margin-left:0;order:4;
+}
+.club-logo-fallback{
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:900;color:#06110e;background:var(--accent);
+}
+.stage-select,.foreign-select{
+  background:#070e17;border:1px solid var(--line-strong);color:var(--text);
+  padding:9px 11px;border-radius:9px;font-size:12px;font-family:inherit;
+  outline:none;transition:border-color .18s,box-shadow .18s;
+}
+.stage-select{max-width:185px;flex:0 0 auto;order:5}
+.stage-select:focus,.foreign-select:focus,input:focus{
+  border-color:rgba(72,224,176,.6);
+  box-shadow:0 0 0 3px rgba(72,224,176,.08);
+}
+.stage-select.stage-vainqueur{border-color:var(--gold);color:var(--gold)}
+.stage-select.stage-finaliste{border-color:var(--accent);color:var(--accent)}
+.stage-select.stage-demi{border-color:#8bb9ff;color:#8bb9ff}
+.stage-select.stage-poules{border-color:var(--red);color:var(--red)}
+#l1-list .drag-item:nth-child(1) .pos-tag{background:rgba(246,200,107,.16);color:var(--gold);border-color:rgba(246,200,107,.3)}
+#l1-list .drag-item:nth-child(2) .pos-tag,
+#l1-list .drag-item:nth-child(3) .pos-tag,
+#l1-list .drag-item:nth-child(4) .pos-tag{background:rgba(90,169,255,.13);color:var(--blue);border-color:rgba(90,169,255,.25)}
+#l1-list .drag-item:nth-child(5) .pos-tag,
+#l1-list .drag-item:nth-child(6) .pos-tag{background:rgba(246,200,107,.08);color:#dba95a}
+#l1-list .drag-item:nth-child(16) .pos-tag{background:rgba(255,111,114,.1);color:var(--red)}
+#l1-list .drag-item:nth-child(17) .pos-tag,
+#l1-list .drag-item:nth-child(18) .pos-tag{background:rgba(255,111,114,.16);color:var(--red);border-color:rgba(255,111,114,.25)}
+.sortable-ghost{opacity:.25}
+.sortable-chosen{border-color:rgba(72,224,176,.6);box-shadow:0 10px 35px rgba(0,0,0,.3)}
+.sortable-drag{box-shadow:0 18px 50px rgba(0,0,0,.45)}
+
+/* FOREIGN */
+.foreign-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.foreign-card{
+  background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.018));
+  border:1px solid var(--line);border-radius:14px;padding:17px;
+  transition:.2s ease;
+}
+.foreign-card:hover{border-color:var(--line-strong);transform:translateY(-1px)}
+.foreign-card-header{display:flex;align-items:center;gap:10px;margin-bottom:15px}
+.foreign-card-header h3{margin:0;font-size:14px}
+.league-logo{width:30px;height:30px;object-fit:contain}
+.foreign-pick{display:flex;align-items:center;gap:12px}
+.club-logo-big{width:49px;height:49px;margin:0;flex:0 0 49px;border-radius:12px;font-size:12px}
+.foreign-select{flex:1}
+
+/* CL / STATS */
+.cl-score-banner{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.stat-card{
+  position:relative;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));
+  border:1px solid var(--line);border-radius:13px;padding:15px 17px;
+}
+.stat-card .num{font-family:"Roboto Mono","Courier New",monospace;font-weight:900;font-size:27px;color:var(--accent);letter-spacing:-.04em}
+.stat-card .lbl{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.12em;margin-top:4px}
+details.matchday{
+  background:rgba(255,255,255,.018);border:1px solid var(--line);
+  border-radius:12px;margin-bottom:8px;overflow:hidden;
+}
+details.matchday[open]{border-color:var(--line-strong)}
+details.matchday summary{
+  padding:13px 15px;cursor:pointer;font-weight:850;
+  display:flex;justify-content:space-between;align-items:center;
+  list-style:none;font-size:12px;
+}
+details.matchday summary::-webkit-details-marker{display:none}
+details.matchday summary::after{content:"+";color:var(--muted);font-size:16px;font-weight:400}
+details.matchday[open] summary::after{content:"−"}
+details.matchday summary .md-pts{color:var(--accent);font-family:"Roboto Mono",monospace;font-size:11px}
+.md-body{padding:0 14px 12px}
+.match-row{
+  display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;
+  padding:10px 0;border-top:1px solid var(--line);font-size:12px;
+}
+.match-row .home{text-align:right}.match-row .away{text-align:left}
+.score-input-group{display:flex;align-items:center;gap:4px;justify-content:center}
+.digit{
+  width:34px;height:40px;text-align:center;background:#060c13;
+  border:1px solid var(--line-strong);color:var(--accent);
+  font-family:"Roboto Mono","Courier New",monospace;font-weight:900;
+  font-size:17px;border-radius:8px;outline:none;
+}
+.digit:disabled{opacity:.9;color:var(--text);background:#0b131d}
+.dash{color:var(--muted-2)}
+.valider-btn{
+  background:var(--accent);border:0;color:#03110d;font-weight:900;
+  border-radius:7px;padding:7px 10px;font-size:9px;cursor:pointer;
+  margin-left:6px;text-transform:uppercase;letter-spacing:.06em;
+}
+.result-badge{font-size:9px;padding:4px 7px;border-radius:6px;margin-left:6px;font-weight:900}
+.result-badge.p3{background:var(--accent);color:#03110d}
+.result-badge.p1{background:rgba(72,224,176,.14);color:var(--accent)}
+.result-badge.p0{background:transparent;color:var(--muted);border:1px solid var(--line)}
+
+/* TABLE / LEADERBOARD */
+table.leaderboard{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;margin-top:14px;overflow:hidden;border:1px solid var(--line);border-radius:12px}
+table.leaderboard th,table.leaderboard td{padding:10px 9px;border-bottom:1px solid var(--line);text-align:left}
+table.leaderboard th{color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:.11em;background:rgba(255,255,255,.018)}
+table.leaderboard tr:last-child td{border-bottom:0}
+table.leaderboard td.rank{width:40px;font-family:"Roboto Mono",monospace;font-weight:900}
+table.leaderboard tr:first-child td{color:var(--gold)}
+
+/* MERCATO */
+.mercato-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.mercato-card{
+  background:linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.017));
+  border:1px solid var(--line);border-radius:14px;padding:18px;
+  transition:border-color .2s,transform .2s;
+}
+.mercato-card:hover{border-color:var(--line-strong);transform:translateY(-1px)}
+.mercato-card h3{margin:0 0 5px;font-size:15px}
+.mercato-card .desc{color:var(--muted);font-size:11px;line-height:1.55;margin-bottom:14px}
+.mercato-card input[type=text]{
+  width:100%;background:#070e17;border:1px solid var(--line);
+  color:var(--text);padding:10px 11px;border-radius:9px;
+  font-size:12px;margin-bottom:8px;font-family:inherit;outline:none;
+}
+.mercato-results{margin-top:13px;display:flex;flex-direction:column;gap:5px}
+.mercato-results .item{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;background:#070e17;border:1px solid rgba(255,255,255,.045);
+  padding:7px 9px;border-radius:7px;
+}
+.mercato-results .item .count{color:var(--accent);font-weight:900;font-family:"Roboto Mono",monospace}
+.voted-tag{color:var(--accent);font-size:10px;margin-top:6px}
+
+/* GATE */
+#gate{
+  position:fixed;inset:0;background:rgba(3,6,10,.82);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;
+}
+#gate .box{
+  position:relative;background:linear-gradient(145deg,#101a26,#070d15);
+  border:1px solid var(--line-strong);border-radius:22px;
+  padding:34px;max-width:430px;width:100%;text-align:left;
+  box-shadow:0 35px 100px rgba(0,0,0,.55);
+  overflow:hidden;
+}
+#gate .box::before{
+  content:"";position:absolute;right:-80px;top:-100px;width:240px;height:240px;
+  background:radial-gradient(circle,rgba(72,224,176,.15),transparent 68%);
+}
+#gate h2{margin:0 0 8px;font-size:28px}
+#gate p{color:var(--muted);font-size:12px;line-height:1.7;margin:0 0 20px}
+#gate input{
+  width:100%;background:#060c13;border:1px solid var(--line-strong);
+  color:var(--text);padding:13px;border-radius:10px;font-size:14px;
+  margin:0 0 10px;text-align:left;font-family:inherit;outline:none;
+}
+#gate .btn{width:100%;padding:13px}
+.hidden{display:none !important}
+.note{color:var(--muted);font-size:11px;margin-top:10px}
+
+
+/* ---- RECAP ---- */
+.eyebrow{
+  color:var(--accent);font-size:9px;font-weight:900;
+  text-transform:uppercase;letter-spacing:.16em;margin-bottom:7px;
+}
+.recap-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.recap-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:20px 0 13px;
+}
+.recap-search-wrap{position:relative;flex:1;max-width:390px}
+.recap-search-icon{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  color:var(--muted);font-size:17px;pointer-events:none;
+}
+#recap-search{
+  width:100%;background:#070e17;border:1px solid var(--line);
+  color:var(--text);padding:10px 12px 10px 34px;border-radius:10px;
+  font:inherit;font-size:12px;outline:none;
+}
+#recap-search:focus{
+  border-color:rgba(72,224,176,.6);
+  box-shadow:0 0 0 3px rgba(72,224,176,.08);
+}
+.recap-count{
+  color:var(--muted);font-size:10px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;
+}
+.recap-table-wrap{
+  overflow:auto;border:1px solid var(--line);border-radius:13px;
+  background:rgba(3,7,12,.38);
+}
+.recap-table{
+  width:100%;min-width:1120px;border-collapse:separate;border-spacing:0;
+  font-size:11px;
+}
+.recap-table th,.recap-table td{
+  padding:11px 10px;border-bottom:1px solid var(--line);
+  border-right:1px solid rgba(255,255,255,.035);text-align:left;
+  vertical-align:middle;
+}
+.recap-table th:last-child,.recap-table td:last-child{border-right:0}
+.recap-table thead th{
+  position:sticky;top:0;z-index:2;
+  background:#0b131e;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.09em;font-size:8px;
+  white-space:nowrap;
+}
+.recap-table tbody tr{
+  cursor:pointer;transition:background .15s ease;
+}
+.recap-table tbody tr:hover{background:rgba(72,224,176,.055)}
+.recap-table tbody tr:last-child td{border-bottom:0}
+.recap-participant{
+  display:flex;align-items:center;gap:9px;min-width:135px;
+}
+.recap-avatar{
+  width:29px;height:29px;display:grid;place-items:center;flex:0 0 29px;
+  border-radius:9px;background:rgba(72,224,176,.11);
+  border:1px solid rgba(72,224,176,.22);color:var(--accent);
+  font-size:9px;font-weight:950;text-transform:uppercase;
+}
+.recap-name{font-weight:850;color:var(--text)}
+.recap-muted{color:var(--muted-2)}
+.recap-team{
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.recap-team img,.recap-team .club-logo{
+  width:20px;height:20px;flex:0 0 20px;border-radius:6px;padding:2px;
+}
+.recap-stage{
+  display:inline-flex;align-items:center;padding:4px 7px;border-radius:6px;
+  background:rgba(255,255,255,.04);border:1px solid var(--line);
+  color:var(--muted);font-size:9px;white-space:nowrap;
+}
+.recap-stage.vainqueur{color:var(--gold);border-color:rgba(246,200,107,.3);background:rgba(246,200,107,.07)}
+.recap-stage.finaliste{color:var(--accent);border-color:rgba(72,224,176,.3);background:rgba(72,224,176,.07)}
+.recap-stage.demi{color:#8bb9ff;border-color:rgba(139,185,255,.25)}
+.recap-stage.poules{color:var(--red);border-color:rgba(255,111,114,.25)}
+.recap-loading,.recap-empty{
+  padding:28px!important;text-align:center!important;color:var(--muted)!important;
+}
+.recap-detail-panel{scroll-margin-top:20px}
+.recap-detail-head{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:18px;
+}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.detail-card{
+  background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
+  border:1px solid var(--line);border-radius:14px;padding:17px;
+}
+.detail-card-wide{grid-column:1/-1}
+.detail-card-title{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.detail-icon{
+  display:grid;place-items:center;width:29px;height:29px;flex:0 0 29px;
+  border-radius:8px;background:rgba(72,224,176,.09);
+  border:1px solid rgba(72,224,176,.18);color:var(--accent);
+  font-family:"Roboto Mono",monospace;font-size:8px;font-weight:900;
+}
+.detail-card-title h3{margin:0;font-size:13px}
+.detail-card-title span:not(.detail-icon){color:var(--muted);font-size:9px}
+.detail-l1-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;
+}
+.detail-l1-item{
+  display:flex;align-items:center;gap:7px;padding:7px 8px;
+  border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.12);
+}
+.detail-l1-rank{
+  width:22px;height:22px;display:grid;place-items:center;flex:0 0 22px;
+  border-radius:6px;background:#070e17;color:var(--muted);
+  font:900 8px "Roboto Mono",monospace;
+}
+.detail-l1-item:nth-child(1) .detail-l1-rank{color:var(--gold);background:rgba(246,200,107,.1)}
+.detail-l1-item:nth-child(2) .detail-l1-rank,
+.detail-l1-item:nth-child(3) .detail-l1-rank,
+.detail-l1-item:nth-child(4) .detail-l1-rank{color:var(--blue)}
+.detail-l1-item .club-logo{order:initial;width:22px;height:22px;flex-basis:22px}
+.detail-l1-name{font-size:10px;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.detail-cl-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;
+  max-height:440px;overflow:auto;padding-right:3px;
+}
+.detail-cl-item{
+  display:flex;align-items:center;gap:7px;padding:7px 8px;
+  border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.12);
+}
+.detail-cl-item .club-logo{order:initial;width:24px;height:24px;flex-basis:24px}
+.detail-cl-team{flex:1;min-width:0;font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.detail-picks-list{display:flex;flex-direction:column;gap:7px}
+.detail-pick{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:9px 10px;border:1px solid var(--line);border-radius:9px;
+  background:rgba(0,0,0,.12);
+}
+.detail-pick-label{
+  color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em;
+}
+.detail-pick-value{
+  color:var(--text);font-size:11px;font-weight:850;text-align:right;
+}
+.detail-pick-value .recap-team{justify-content:flex-end}
+
+@media (max-width:760px){
+  .recap-heading,.recap-detail-head{flex-direction:column}
+  .recap-heading .btn,.recap-detail-head .btn{width:100%}
+  .recap-toolbar{align-items:stretch;flex-direction:column}
+  .recap-search-wrap{max-width:none}
+  .recap-count{text-align:right}
+  .detail-grid{grid-template-columns:1fr}
+  .detail-card-wide{grid-column:auto}
+  .detail-l1-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .detail-cl-grid{grid-template-columns:1fr}
+}
+
+/* RESPONSIVE */
+@media (max-width:760px){
+  body{padding-bottom:28px}
+  .wrap{padding:0 14px}
+  header{position:relative}
+  header>.wrap{padding-top:14px}
+  .brand{align-items:flex-start}
+  .brand>div:first-child{gap:10px}
+  .brand>div:first-child::before{width:36px;height:36px;border-radius:10px;font-size:16px}
+  .brand h1{font-size:27px}
+  .brand .tag{font-size:8px;letter-spacing:.08em;white-space:nowrap}
+  .pseudo-badge{font-size:0;padding:8px}
+  .pseudo-badge b{font-size:10px}
+  .pseudo-badge button{font-size:10px}
+  nav.tabs{margin-top:13px;margin-left:-14px;margin-right:-14px;padding:0 14px}
+  nav.tabs button{padding:12px 12px 13px;font-size:9px}
+  main{padding-top:18px}
+  .panel{padding:18px 13px;border-radius:15px}
+  .panel h2{font-size:19px}
+  .panel .sub{font-size:11px}
+  .drag-item{min-height:52px;padding:8px 9px;gap:8px;font-size:12px}
+  .pos-tag{width:28px;height:28px;flex-basis:28px}
+  .club-logo{width:29px;height:29px;flex-basis:29px}
+  .stage-select{max-width:130px;font-size:10px;padding:8px 7px}
+  .foreign-grid,.mercato-grid{grid-template-columns:1fr}
+  .cl-score-banner{grid-template-columns:1fr 1fr}
+  .stat-card:last-child{grid-column:1/-1}
+  .match-row{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);font-size:10px}
+  .digit{width:29px;height:36px;font-size:15px}
+  .valider-btn{padding:6px 7px;font-size:8px}
+}
+@media (max-width:430px){
+  .pseudo-badge::before{display:none}
+  .drag-item .handle{font-size:12px}
+  .stage-select{max-width:116px}
+  .team-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cl-score-banner{grid-template-columns:1fr}
+  .stat-card:last-child{grid-column:auto}
+}
+
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="box">
+    <h2 class="display">Entrez sur le terrain</h2>
+    <p>Choisis un pseudo pour établir le classement, pronostiquer la Ligue des champions et voter au mercato. Ce pseudo sera visible des autres participants.</p>
+    <input id="gate-input" type="text" placeholder="Ton pseudo" maxlength="24">
+    <button class="btn" id="gate-btn" style="width:100%;">C'est parti</button>
+  </div>
+</div>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <div>
+        <h1 class="display">Tribune<span>.</span></h1>
+        <p class="tag">Le terrain privé des pronostics · Saison 2026/27</p>
+      </div>
+      <div class="pseudo-badge">
+        Connecté : <b id="pseudo-label">—</b>
+        <button id="change-pseudo">changer</button>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="l1">Classement Ligue 1</button>
+      <button class="tab-btn" data-tab="cl">Pronos Ligue des Champions</button>
+      <button class="tab-btn" data-tab="foreign">Pronos Championnats Étrangers</button>
+      <button class="tab-btn" data-tab="mercato">Prédictions libres</button>
+      <button class="tab-btn" data-tab="recap">Récapitulatif</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- LIGUE 1 TAB -->
+  <section id="tab-l1" class="tab-panel">
+    <div class="panel">
+      <h2>Classement Ligue 1 <span style="color:var(--accent)">2026/27</span></h2>
+      <p class="sub">Fais glisser une équipe pour la repositionner. Ce classement est personnel : lui seul le voit et le modifie, sous ton pseudo.</p>
+      <ul class="drag-list" id="l1-list"></ul>
+    </div>
+  </section>
+
+  <!-- CHAMPIONS LEAGUE TAB -->
+  <section id="tab-cl" class="tab-panel hidden">
+    <div class="panel">
+      <h2>Parcours Ligue des champions</h2>
+      <p class="sub">Pour chaque club, choisis le stade auquel tu penses qu'il sera éliminé (ou qu'il ira jusqu'au bout). Fais glisser un club pour réordonner la liste. Ce pronostic est personnel, propre à ton pseudo.</p>
+      <ul class="drag-list" id="cl-list"></ul>
+    </div>
+  </section>
+
+  <!-- FOREIGN LEAGUES TAB -->
+  <section id="tab-foreign" class="tab-panel hidden">
+    <div class="panel">
+      <h2>Pronos — Championnats étrangers</h2>
+      <p class="sub">Pour chaque championnat, choisis le club que tu vois champion. Un pronostic par championnat, personnel à ton pseudo et modifiable à tout moment.</p>
+      <div class="foreign-grid" id="foreign-grid"></div>
+    </div>
+  </section>
+
+  <!-- PREDICTIONS LIBRES TAB -->
+  <section id="tab-mercato" class="tab-panel hidden">
+    <div class="panel">
+      <h2>Prédictions libres</h2>
+      <p class="sub">Vote pour le meilleur buteur, le meilleur passeur, le flop du mercato, le Ballon d'or et le Soulier d'or européen de la saison. Un vote par catégorie, modifiable à tout moment.</p>
+      <div class="mercato-grid">
+        <div class="mercato-card">
+          <h3>⚽ Meilleur buteur</h3>
+          <div class="desc">Le joueur le plus prolifique devant le but.</div>
+          <input type="text" id="vote-buteur" placeholder="Nom du joueur">
+          <button class="btn" data-cat="buteur">Voter</button>
+          <div class="voted-tag" id="voted-buteur"></div>
+          <div class="mercato-results" id="results-buteur"></div>
+        </div>
+        <div class="mercato-card">
+          <h3>🎯 Meilleur passeur</h3>
+          <div class="desc">Le joueur qui a le plus régalé ses coéquipiers.</div>
+          <input type="text" id="vote-passeur" placeholder="Nom du joueur">
+          <button class="btn" data-cat="passeur">Voter</button>
+          <div class="voted-tag" id="voted-passeur"></div>
+          <div class="mercato-results" id="results-passeur"></div>
+        </div>
+        <div class="mercato-card">
+          <h3>📉 Flop du mercato</h3>
+          <div class="desc">La recrue la plus décevante de l'année.</div>
+          <input type="text" id="vote-flop" placeholder="Nom du joueur">
+          <button class="btn" data-cat="flop">Voter</button>
+          <div class="voted-tag" id="voted-flop"></div>
+          <div class="mercato-results" id="results-flop"></div>
+        </div>
+        <div class="mercato-card">
+          <h3>🏆 Ballon d'or</h3>
+          <div class="desc">Le meilleur joueur du monde sur l'année.</div>
+          <input type="text" id="vote-ballondor" placeholder="Nom du joueur">
+          <button class="btn" data-cat="ballondor">Voter</button>
+          <div class="voted-tag" id="voted-ballondor"></div>
+          <div class="mercato-results" id="results-ballondor"></div>
+        </div>
+        <div class="mercato-card">
+          <h3>👟 Soulier d'or européen</h3>
+          <div class="desc">Le meilleur buteur des championnats européens.</div>
+          <input type="text" id="vote-soulierdor" placeholder="Nom du joueur">
+          <button class="btn" data-cat="soulierdor">Voter</button>
+          <div class="voted-tag" id="voted-soulierdor"></div>
+          <div class="mercato-results" id="results-soulierdor"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- RECAP TAB -->
+  <section id="tab-recap" class="tab-panel hidden">
+    <div class="panel recap-panel">
+      <div class="recap-heading">
+        <div>
+          <div class="eyebrow">Vue collective</div>
+          <h2>Récapitulatif des pronostics</h2>
+          <p class="sub">Compare les choix de tous les participants. Clique sur une ligne pour ouvrir la fiche détaillée.</p>
+        </div>
+        <button class="btn ghost" id="recap-refresh" type="button">Actualiser</button>
+      </div>
+
+      <div class="recap-toolbar">
+        <div class="recap-search-wrap">
+          <span class="recap-search-icon">⌕</span>
+          <input id="recap-search" type="search" placeholder="Rechercher un participant…" autocomplete="off">
+        </div>
+        <div class="recap-count" id="recap-count">— participants</div>
+      </div>
+
+      <div class="recap-table-wrap">
+        <table class="recap-table">
+          <thead>
+            <tr>
+              <th>Participant</th>
+              <th>Ligue 1</th>
+              <th>Ligue des champions</th>
+              <th>Premier League</th>
+              <th>Liga</th>
+              <th>Serie A</th>
+              <th>Bundesliga</th>
+              <th>Buteur</th>
+              <th>Passeur</th>
+              <th>Flop</th>
+              <th>Ballon d'or</th>
+              <th>Soulier d'or</th>
+            </tr>
+          </thead>
+          <tbody id="recap-tbody">
+            <tr><td colspan="12" class="recap-loading">Chargement des pronostics…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel recap-detail-panel hidden" id="recap-detail">
+      <div class="recap-detail-head">
+        <div>
+          <div class="eyebrow">Fiche participant</div>
+          <h2 id="recap-detail-name">—</h2>
+          <p class="sub">Vue complète des pronostics enregistrés pour ce participant.</p>
+        </div>
+        <button class="btn ghost" id="recap-detail-close" type="button">Fermer</button>
+      </div>
+
+      <div class="detail-grid">
+        <section class="detail-card detail-card-wide">
+          <div class="detail-card-title">
+            <span class="detail-icon">01</span>
+            <div><h3>Classement Ligue 1</h3><span>Ordre prévisionnel</span></div>
+          </div>
+          <div id="detail-l1" class="detail-l1-grid"></div>
+        </section>
+
+        <section class="detail-card detail-card-wide">
+          <div class="detail-card-title">
+            <span class="detail-icon">02</span>
+            <div><h3>Ligue des champions</h3><span>Parcours prévu par club</span></div>
+          </div>
+          <div id="detail-cl" class="detail-cl-grid"></div>
+        </section>
+
+        <section class="detail-card">
+          <div class="detail-card-title">
+            <span class="detail-icon">03</span>
+            <div><h3>Championnats</h3><span>Champions prédits</span></div>
+          </div>
+          <div id="detail-foreign" class="detail-picks-list"></div>
+        </section>
+
+        <section class="detail-card">
+          <div class="detail-card-title">
+            <span class="detail-icon">04</span>
+            <div><h3>Prédictions libres</h3><span>Votes actuels</span></div>
+          </div>
+          <div id="detail-mercato" class="detail-picks-list"></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ===================== DATA ===================== */
+const L1_TEAMS = ["Angers SCO","AJ Auxerre","Stade Brestois 29","Le Havre AC","Le Mans FC","RC Lens","LOSC Lille","FC Lorient","Olympique Lyonnais","Olympique de Marseille","AS Monaco","OGC Nice","Paris FC","Paris Saint-Germain","Stade Rennais FC","RC Strasbourg","Toulouse FC","ESTAC Troyes"];
+
+const CL_STAGES = [
+  { key: "vainqueur", label: "Vainqueur" },
+  { key: "finaliste", label: "Finaliste" },
+  { key: "demi", label: "Demi-finaliste" },
+  { key: "quart", label: "Quart de finaliste" },
+  { key: "huitieme", label: "Huitieme de finaliste" },
+  { key: "barragiste", label: "Barragiste" },
+  { key: "poules", label: "Elimine en poules" }
+];
+
+const CL_PRIORITY = ["Paris Saint-Germain","Lille","Monaco","Brest","Real Madrid","Barcelona","Arsenal"];
+const CL_OTHERS = ["Manchester City","Bayern Munich","Liverpool","Inter Milan","Borussia Dortmund","RB Leipzig","Bayer Leverkusen","Atlético Madrid","Atalanta","Juventus","Benfica","Club Brugge","Shakhtar Donetsk","Milan","Feyenoord","Sporting CP","PSV Eindhoven","Dinamo Zagreb","Red Bull Salzburg","Red Star Belgrade","Young Boys","Celtic","Slovan Bratislava","Sparta Prague","Aston Villa","Bologna","Girona","VfB Stuttgart","Sturm Graz"];
+const CL_CLUBS = [...CL_PRIORITY, ...CL_OTHERS];
+
+/* ---- Club logos (via the open-source luukhopman/football-logos repo, served through jsDelivr) ---- */
+const LOGO_PATHS = {
+  // Ligue 1
+  "Angers SCO": "logos/France - Ligue 1/Angers SCO.png",
+  "AJ Auxerre": "logos/France - Ligue 1/AJ Auxerre.png",
+  "Stade Brestois 29": "logos/France - Ligue 1/Stade Brestois 29.png",
+  "Le Havre AC": "logos/France - Ligue 1/Le Havre AC.png",
+  "Le Mans FC": "logos/France - Ligue 1/Le Mans FC.png",
+  "RC Lens": "logos/France - Ligue 1/RC Lens.png",
+  "LOSC Lille": "logos/France - Ligue 1/LOSC Lille.png",
+  "FC Lorient": "logos/France - Ligue 1/FC Lorient.png",
+  "Olympique Lyonnais": "logos/France - Ligue 1/Olympique Lyon.png",
+  "Olympique de Marseille": "logos/France - Ligue 1/Olympique Marseille.png",
+  "AS Monaco": "logos/France - Ligue 1/AS Monaco.png",
+  "OGC Nice": "logos/France - Ligue 1/OGC Nice.png",
+  "Paris FC": "logos/France - Ligue 1/Paris FC.png",
+  "Paris Saint-Germain": "logos/France - Ligue 1/Paris Saint-Germain.png",
+  "Stade Rennais FC": "logos/France - Ligue 1/Stade Rennais FC.png",
+  "RC Strasbourg": "logos/France - Ligue 1/RC Strasbourg Alsace.png",
+  "Toulouse FC": "logos/France - Ligue 1/FC Toulouse.png",
+  "ESTAC Troyes": "logos/France - Ligue 1/ESTAC Troyes.png",
+  // Champions League clubs
+  "Lille": "logos/France - Ligue 1/LOSC Lille.png",
+  "Monaco": "logos/France - Ligue 1/AS Monaco.png",
+  "Brest": "logos/France - Ligue 1/Stade Brestois 29.png",
+  "Real Madrid": "logos/Spain - LaLiga/Real Madrid.png",
+  "Barcelona": "logos/Spain - LaLiga/FC Barcelona.png",
+  "Atlético Madrid": "logos/Spain - LaLiga/Atlético de Madrid.png",
+  "Girona": "history/2025-26/Spain - LaLiga/Girona FC.png",
+  "Arsenal": "logos/England - Premier League/Arsenal FC.png",
+  "Manchester City": "logos/England - Premier League/Manchester City.png",
+  "Liverpool": "logos/England - Premier League/Liverpool FC.png",
+  "Aston Villa": "logos/England - Premier League/Aston Villa.png",
+  "Bayern Munich": "logos/Germany - Bundesliga/Bayern Munich.png",
+  "Borussia Dortmund": "logos/Germany - Bundesliga/Borussia Dortmund.png",
+  "RB Leipzig": "logos/Germany - Bundesliga/RB Leipzig.png",
+  "Bayer Leverkusen": "logos/Germany - Bundesliga/Bayer 04 Leverkusen.png",
+  "VfB Stuttgart": "logos/Germany - Bundesliga/VfB Stuttgart.png",
+  "Inter Milan": "logos/Italy - Serie A/Inter Milan.png",
+  "Atalanta": "logos/Italy - Serie A/Atalanta BC.png",
+  "Juventus": "logos/Italy - Serie A/Juventus FC.png",
+  "Milan": "logos/Italy - Serie A/AC Milan.png",
+  "Bologna": "logos/Italy - Serie A/Bologna FC 1909.png",
+  "Benfica": "logos/Portugal - Liga Portugal/SL Benfica.png",
+  "Sporting CP": "logos/Portugal - Liga Portugal/Sporting CP.png",
+  "Club Brugge": "logos/Belgium - Jupiler Pro League/Club Brugge KV.png",
+  "Shakhtar Donetsk": "logos/Ukraine - Premier Liga/Shakhtar Donetsk.png",
+  "Feyenoord": "logos/Netherlands - Eredivisie/Feyenoord Rotterdam.png",
+  "PSV Eindhoven": "logos/Netherlands - Eredivisie/PSV Eindhoven.png",
+  "Dinamo Zagreb": "logos/Croatia - SuperSport HNL/GNK Dinamo Zagreb.png",
+  "Red Bull Salzburg": "logos/Austria - Bundesliga/Red Bull Salzburg.png",
+  "Sturm Graz": "logos/Austria - Bundesliga/SK Sturm Graz.png",
+  "Red Star Belgrade": "logos/Serbia - Super liga Srbije/Red Star Belgrade.png",
+  "Young Boys": "logos/Switzerland - Super League/BSC Young Boys.png",
+  "Celtic": "logos/Scotland - Scottish Premiership/Celtic FC.png",
+  "Sparta Prague": "logos/Czech Republic - Chance Liga/AC Sparta Prague.png"
+  // Slovan Bratislava: pas de logo disponible dans la source -> repli automatique sur les initiales
+};
+
+/* ---- Championnats étrangers 2026/2027 ---- */
+const FOREIGN_LEAGUE_FOLDERS = {
+  "premier-league": "England - Premier League",
+  "liga": "Spain - LaLiga",
+  "serie-a": "Italy - Serie A",
+  "bundesliga": "Germany - Bundesliga"
+};
+const FOREIGN_LEAGUES = [
+  { key: "premier-league", name: "Premier League", logo: "https://media.api-sports.io/football/leagues/39.png", clubs: ["Arsenal FC","Aston Villa","AFC Bournemouth","Brentford FC","Brighton & Hove Albion","Chelsea FC","Coventry City","Crystal Palace","Everton FC","Fulham FC","Hull City","Ipswich Town","Leeds United","Liverpool FC","Manchester City","Manchester United","Newcastle United","Nottingham Forest","Sunderland AFC","Tottenham Hotspur"] },
+  { key: "liga", name: "Liga", logo: "https://media.api-sports.io/football/leagues/140.png", clubs: ["Athletic Bilbao","Atlético de Madrid","CA Osasuna","Celta de Vigo","Deportivo A Coruña","Deportivo Alavés","Elche CF","FC Barcelona","Getafe CF","Levante UD","Málaga CF","RCD Espanyol Barcelona","Racing Santander","Rayo Vallecano","Real Betis Balompié","Real Madrid","Real Sociedad","Sevilla FC","Valencia CF","Villarreal CF"] },
+  { key: "serie-a", name: "Serie A", logo: "https://media.api-sports.io/football/leagues/135.png", clubs: ["AC Milan","AC Monza","ACF Fiorentina","AS Roma","Atalanta BC","Bologna FC 1909","Cagliari Calcio","Como 1907","Frosinone Calcio","Genoa CFC","Inter Milan","Juventus FC","Parma Calcio 1913","SS Lazio","SSC Napoli","Torino FC","US Lecce","US Sassuolo","Udinese Calcio","Venezia FC"] },
+  { key: "bundesliga", name: "Bundesliga", logo: "https://media.api-sports.io/football/leagues/78.png", clubs: ["1.FC Köln","1.FC Union Berlin","1.FSV Mainz 05","Bayer 04 Leverkusen","Bayern Munich","Borussia Dortmund","Borussia Mönchengladbach","Eintracht Frankfurt","FC Augsburg","FC Schalke 04","Hamburger SV","RB Leipzig","SC Freiburg","SC Paderborn 07","SV 07 Elversberg","SV Werder Bremen","TSG 1899 Hoffenheim","VfB Stuttgart"] }
+];
+FOREIGN_LEAGUES.forEach(l=>{
+  l.clubs.forEach(club=>{
+    LOGO_PATHS[club] = `logos/${FOREIGN_LEAGUE_FOLDERS[l.key]}/${club}.png`;
+  });
+});
+
+function logoUrl(team){
+  const rel = LOGO_PATHS[team];
+  if(!rel) return null;
+  return 'https://cdn.jsdelivr.net/gh/luukhopman/football-logos@master/' + rel.split('/').map(encodeURIComponent).join('/');
+}
+
+function logoImgHtml(team){
+  const url = logoUrl(team);
+  if(!url){
+    return `<span class="club-logo club-logo-fallback">${clubInitials(team)}</span>`;
+  }
+  return `<img class="club-logo" src="${url}" alt="" data-team="${team}" onerror="handleLogoError(this)">`;
+}
+
+function clubInitials(team){
+  return team.split(/\s+/).filter(w=>w.length>0).slice(0,3).map(w=>w[0]).join('').toUpperCase().slice(0,3) || '?';
+}
+
+function handleLogoError(img){
+  const span = document.createElement('span');
+  span.className = 'club-logo club-logo-fallback';
+  span.textContent = clubInitials(img.dataset.team || '');
+  img.replaceWith(span);
+}
+
+/* ===================== SUPABASE CONFIG ===================== */
+// 1. Crée un projet sur https://supabase.com
+// 2. Va dans Project Settings > API et copie l'URL et la clé "anon public"
+// 3. Colle-les ci-dessous
+const SUPABASE_URL = "https://tnfmjxhmfnxetafbbsbd.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRuZm1qeGhtZm54ZXRhZmJic2JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwMDE3OTksImV4cCI6MjEwMjU3Nzc5OX0.IPeYTCL2JdzqwykbMVbU62AgYhVfnvoB8j9jaHBo3O0";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ===================== STORAGE HELPERS (Supabase) ===================== */
+// Ces trois fonctions remplacent window.storage : toutes les données passent
+// par la table "app_storage" (voir README pour le script SQL de création).
+async function sGet(key){
+  const { data, error } = await sb.from('app_storage').select('value').eq('key', key).maybeSingle();
+  if(error){ console.error('sGet error', error); return null; }
+  return data ? data.value : null;
+}
+async function sSet(key, value){
+  const { error } = await sb.from('app_storage').upsert({ key, value, updated_at: new Date().toISOString() });
+  if(error){ console.error('sSet error', error); return false; }
+  return true;
+}
+async function sList(prefix){
+  const { data, error } = await sb.from('app_storage').select('key').like('key', prefix + '%');
+  if(error){ console.error('sList error', error); return []; }
+  return data.map(r => r.key);
+}
+
+/* ===================== STATE ===================== */
+let pseudo = null;
+
+/* ===================== GATE / PSEUDO ===================== */
+async function init(){
+  pseudo = localStorage.getItem('pseudo');
+  if(pseudo){ enterApp(); } else { document.getElementById('gate').classList.remove('hidden'); }
+}
+document.getElementById('gate-btn').addEventListener('click', async ()=>{
+  const v = document.getElementById('gate-input').value.trim();
+  if(!v){ return; }
+  pseudo = v.slice(0,24);
+  localStorage.setItem('pseudo', pseudo);
+  enterApp();
+});
+document.getElementById('gate-input').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('gate-btn').click(); });
+document.getElementById('change-pseudo').addEventListener('click', ()=>{
+  document.getElementById('gate-input').value = pseudo || '';
+  document.getElementById('gate').classList.remove('hidden');
+});
+
+async function enterApp(){
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('pseudo-label').textContent = pseudo;
+  await boot();
+}
+
+/* ===================== TABS ===================== */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.add('hidden'));
+    document.getElementById('tab-'+btn.dataset.tab).classList.remove('hidden');
+  });
+});
+
+/* ===================== BOOT ===================== */
+async function boot(){
+  await loadAndRenderL1();
+  await loadAndRenderCL();
+  await loadAndRenderForeign();
+  renderMercatoTab();
+}
+
+/* ===================== LIGUE 1 (drag-and-drop ranking) ===================== */
+let l1Order = [];
+let l1Sortable = null;
+
+async function loadAndRenderL1(){
+  l1Order = await sGet('l1_order_'+pseudo, true);
+  if(!l1Order || l1Order.length !== L1_TEAMS.length || !L1_TEAMS.every(t=>l1Order.includes(t))){
+    l1Order = L1_TEAMS.slice();
+    await sSet('l1_order_'+pseudo, l1Order, true);
+  }
+  renderL1List();
+  initL1Sortable();
+}
+
+function renderL1List(){
+  const ul = document.getElementById('l1-list');
+  ul.innerHTML = l1Order.map((team,i)=>`
+    <li class="drag-item" data-team="${team}">
+      <span class="pos-tag">${i+1}</span>
+      <span class="handle">⠿⠿</span>
+      <span class="team-name">${team}</span>
+      ${logoImgHtml(team)}
+    </li>`).join('');
+}
+
+function initL1Sortable(){
+  const ul = document.getElementById('l1-list');
+  if(l1Sortable){ l1Sortable.destroy(); }
+  l1Sortable = new Sortable(ul, {
+    animation:150,
+    ghostClass:'sortable-ghost',
+    chosenClass:'sortable-chosen',
+    dragClass:'sortable-drag',
+    onEnd: async ()=>{
+      const items = ul.querySelectorAll('.drag-item');
+      l1Order = Array.from(items).map(li=>li.dataset.team);
+      items.forEach((li,i)=>{ li.querySelector('.pos-tag').textContent = i+1; });
+      await sSet('l1_order_'+pseudo, l1Order, true);
+    }
+  });
+}
+
+/* ===================== CHAMPIONS LEAGUE (parcours par club) ===================== */
+let clPicks = [];
+let clSortable = null;
+
+async function loadAndRenderCL(){
+  clPicks = await sGet('cl_stage_picks_'+pseudo, true);
+  if(!clPicks || clPicks.length !== CL_CLUBS.length || !CL_CLUBS.every(t=>clPicks.some(p=>p.team===t))){
+    clPicks = CL_CLUBS.map(team => ({ team, stage: '' }));
+    await sSet('cl_stage_picks_'+pseudo, clPicks, true);
+  }
+  renderCLList();
+  initCLSortable();
+}
+
+function renderCLList(){
+  const ul = document.getElementById('cl-list');
+  ul.innerHTML = clPicks.map((p)=>`
+    <li class="drag-item" data-team="${p.team}">
+      <span class="handle">⠿⠿</span>
+      ${logoImgHtml(p.team)}
+      <span class="team-name">${p.team}</span>
+      <select class="stage-select ${p.stage?'stage-'+p.stage:''}" data-team="${p.team}">
+        <option value="" ${p.stage===''?'selected':''}>— Choisir —</option>
+        ${CL_STAGES.map(s=>`<option value="${s.key}" ${p.stage===s.key?'selected':''}>${s.label}</option>`).join('')}
+      </select>
+    </li>`).join('');
+
+  ul.querySelectorAll('.stage-select').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      const team = sel.dataset.team;
+      const pick = clPicks.find(p=>p.team===team);
+      if(pick){ pick.stage = sel.value; }
+      sel.className = 'stage-select' + (sel.value ? ' stage-'+sel.value : '');
+      await sSet('cl_stage_picks_'+pseudo, clPicks, true);
+    });
+  });
+}
+
+function initCLSortable(){
+  const ul = document.getElementById('cl-list');
+  if(clSortable){ clSortable.destroy(); }
+  clSortable = new Sortable(ul, {
+    animation:150,
+    handle:'.handle',
+    ghostClass:'sortable-ghost',
+    chosenClass:'sortable-chosen',
+    dragClass:'sortable-drag',
+    onEnd: async ()=>{
+      const items = ul.querySelectorAll('.drag-item');
+      const newOrder = Array.from(items).map(li=>li.dataset.team);
+      clPicks = newOrder.map(team => clPicks.find(p=>p.team===team));
+      await sSet('cl_stage_picks_'+pseudo, clPicks, true);
+    }
+  });
+}
+
+/* ===================== CHAMPIONNATS ÉTRANGERS ===================== */
+let foreignPicks = {};
+
+async function loadAndRenderForeign(){
+  foreignPicks = (await sGet('foreign_champions_'+pseudo, true)) || {};
+  renderForeignTab();
+}
+
+function renderForeignTab(){
+  const grid = document.getElementById('foreign-grid');
+  grid.innerHTML = FOREIGN_LEAGUES.map(l=>{
+    const picked = foreignPicks[l.key] || '';
+    return `
+    <div class="foreign-card">
+      <div class="foreign-card-header">
+        <img class="league-logo" src="${l.logo}" alt="" onerror="this.style.display='none'">
+        <h3>${l.name}</h3>
+      </div>
+      <div class="foreign-pick">
+        ${picked ? logoImgHtmlBig(picked) : `<span class="club-logo club-logo-big club-logo-fallback">?</span>`}
+        <select class="foreign-select" data-league="${l.key}">
+          <option value="">— Choisir —</option>
+          ${l.clubs.map(c=>`<option value="${c}" ${picked===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.foreign-select').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      foreignPicks[sel.dataset.league] = sel.value;
+      await sSet('foreign_champions_'+pseudo, foreignPicks, true);
+      renderForeignTab();
+    });
+  });
+}
+
+function logoImgHtmlBig(team){
+  const url = logoUrl(team);
+  if(!url){ return `<span class="club-logo club-logo-big club-logo-fallback">${clubInitials(team)}</span>`; }
+  return `<img class="club-logo club-logo-big" src="${url}" alt="" data-team="${team}" onerror="handleLogoError(this)">`;
+}
+
+/* ===================== MERCATO ===================== */
+function renderMercatoTab(){
+  document.querySelectorAll('.mercato-card button[data-cat]').forEach(btn=>{
+    btn.addEventListener('click', ()=> submitVote(btn.dataset.cat));
+  });
+  ['buteur','passeur','flop','ballondor','soulierdor'].forEach(cat=> refreshMercatoCategory(cat));
+}
+
+async function submitVote(cat){
+  const input = document.getElementById('vote-'+cat);
+  const val = input.value.trim();
+  if(!val) return;
+  const my = (await sGet('mercato_'+pseudo, true)) || {};
+  my[cat] = val;
+  await sSet('mercato_'+pseudo, my, true);
+  input.value = '';
+  refreshMercatoCategory(cat);
+}
+
+async function refreshMercatoCategory(cat){
+  const keys = await sList('mercato_', true);
+  const counts = {};
+  let myVote = null;
+  for(const k of keys){
+    const v = await sGet(k, true);
+    if(!v || !v[cat]) continue;
+    const name = v[cat].trim();
+    const norm = name.toLowerCase();
+    counts[norm] = counts[norm] || {label:name, count:0};
+    counts[norm].count++;
+    if(k === 'mercato_'+pseudo) myVote = name;
+  }
+  const sorted = Object.values(counts).sort((a,b)=> b.count - a.count).slice(0,8);
+  document.getElementById('results-'+cat).innerHTML = sorted.length ? sorted.map(s=>`
+    <div class="item"><span>${s.label}</span><span class="count">${s.count}</span></div>
+  `).join('') : '<p class="sub" style="margin:4px 0 0 0;">Pas encore de votes.</p>';
+  document.getElementById('voted-'+cat).textContent = myVote ? `Ton vote actuel : ${myVote}` : '';
+}
+
+
+/* ===================== RECAP ===================== */
+const RECAP_MERCATO_CATS = [
+  ['buteur','Meilleur buteur'],
+  ['passeur','Meilleur passeur'],
+  ['flop','Flop du mercato'],
+  ['ballondor',"Ballon d'or"],
+  ['soulierdor',"Soulier d'or"]
+];
+
+let recapParticipants = [];
+let recapLoaded = false;
+
+function escapeHtml(value){
+  return String(value ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[c]));
+}
+
+function recapInitials(name){
+  return clubInitials(name || '?');
+}
+
+function recapTeamHtml(team){
+  if(!team) return '<span class="recap-muted">—</span>';
+  return `<span class="recap-team">${logoImgHtml(team)}<span>${escapeHtml(team)}</span></span>`;
+}
+
+function recapStageHtml(stage){
+  if(!stage) return '<span class="recap-muted">Non renseigné</span>';
+  const found = CL_STAGES.find(s => s.key === stage);
+  const label = found ? found.label : stage;
+  return `<span class="recap-stage ${escapeHtml(stage)}">${escapeHtml(label)}</span>`;
+}
+
+async function getRecapPseudos(){
+  const keys = new Set();
+
+  const l1Keys = await sList('l1_order_');
+  l1Keys.forEach(k => keys.add(k.slice('l1_order_'.length)));
+
+  const clKeys = await sList('cl_stage_picks_');
+  clKeys.forEach(k => keys.add(k.slice('cl_stage_picks_'.length)));
+
+  const foreignKeys = await sList('foreign_champions_');
+  foreignKeys.forEach(k => keys.add(k.slice('foreign_champions_'.length)));
+
+  const mercatoKeys = await sList('mercato_');
+  mercatoKeys.forEach(k => keys.add(k.slice('mercato_'.length)));
+
+  return [...keys].filter(Boolean).sort((a,b)=>a.localeCompare(b,'fr',{sensitivity:'base'}));
+}
+
+async function loadRecapData(){
+  const pseudos = await getRecapPseudos();
+  const rows = [];
+
+  for(const name of pseudos){
+    const [l1, cl, foreign, mercato] = await Promise.all([
+      sGet('l1_order_'+name),
+      sGet('cl_stage_picks_'+name),
+      sGet('foreign_champions_'+name),
+      sGet('mercato_'+name)
+    ]);
+
+    rows.push({
+      pseudo:name,
+      l1:Array.isArray(l1) ? l1 : [],
+      cl:Array.isArray(cl) ? cl : [],
+      foreign:foreign && typeof foreign === 'object' ? foreign : {},
+      mercato:mercato && typeof mercato === 'object' ? mercato : {}
+    });
+  }
+
+  recapParticipants = rows;
+  recapLoaded = true;
+  renderRecapTable();
+}
+
+function recapForeignTeam(row,key){
+  const value = row.foreign?.[key];
+  return value ? value : '';
+}
+
+function recapFreePick(row,cat){
+  return row.mercato?.[cat] || '';
+}
+
+function renderRecapTable(){
+  const tbody = document.getElementById('recap-tbody');
+  const search = (document.getElementById('recap-search')?.value || '').trim().toLowerCase();
+  const filtered = recapParticipants.filter(r => r.pseudo.toLowerCase().includes(search));
+
+  document.getElementById('recap-count').textContent =
+    `${filtered.length} participant${filtered.length > 1 ? 's' : ''}`;
+
+  if(!filtered.length){
+    tbody.innerHTML = `<tr><td colspan="12" class="recap-empty">${search ? 'Aucun participant ne correspond à cette recherche.' : 'Aucun pronostic enregistré pour le moment.'}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((row,index)=>{
+    const clWinners = row.cl.filter(p => p.stage === 'vainqueur').map(p => p.team);
+    const l1Top = row.l1.slice(0,3);
+    const l1Summary = l1Top.length
+      ? l1Top.map((team,i)=>`${i+1}. ${escapeHtml(team)}`).join(' · ')
+      : '—';
+
+    return `<tr data-recap-pseudo="${escapeHtml(row.pseudo)}">
+      <td>
+        <div class="recap-participant">
+          <span class="recap-avatar">${escapeHtml(recapInitials(row.pseudo))}</span>
+          <span class="recap-name">${escapeHtml(row.pseudo)}</span>
+        </div>
+      </td>
+      <td>${l1Summary}${row.l1.length > 3 ? ' · …' : ''}</td>
+      <td>${clWinners.length ? clWinners.map(escapeHtml).join(', ') : '<span class="recap-muted">Non renseigné</span>'}</td>
+      <td>${recapTeamHtml(recapForeignTeam(row,'premier-league'))}</td>
+      <td>${recapTeamHtml(recapForeignTeam(row,'liga'))}</td>
+      <td>${recapTeamHtml(recapForeignTeam(row,'serie-a'))}</td>
+      <td>${recapTeamHtml(recapForeignTeam(row,'bundesliga'))}</td>
+      <td>${escapeHtml(recapFreePick(row,'buteur') || '—')}</td>
+      <td>${escapeHtml(recapFreePick(row,'passeur') || '—')}</td>
+      <td>${escapeHtml(recapFreePick(row,'flop') || '—')}</td>
+      <td>${escapeHtml(recapFreePick(row,'ballondor') || '—')}</td>
+      <td>${escapeHtml(recapFreePick(row,'soulierdor') || '—')}</td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('tr[data-recap-pseudo]').forEach(tr=>{
+    tr.addEventListener('click',()=>openRecapDetail(tr.dataset.recapPseudo));
+  });
+}
+
+function openRecapDetail(pseudoName){
+  const row = recapParticipants.find(r=>r.pseudo === pseudoName);
+  if(!row) return;
+
+  document.getElementById('recap-detail-name').textContent = row.pseudo;
+
+  document.getElementById('detail-l1').innerHTML = row.l1.length
+    ? row.l1.map((team,i)=>`
+      <div class="detail-l1-item">
+        <span class="detail-l1-rank">${i+1}</span>
+        ${logoImgHtml(team)}
+        <span class="detail-l1-name">${escapeHtml(team)}</span>
+      </div>`).join('')
+    : '<div class="recap-empty">Classement non renseigné.</div>';
+
+  const orderedCl = [...row.cl].sort((a,b)=>{
+    const ai = CL_STAGES.findIndex(s=>s.key===a.stage);
+    const bi = CL_STAGES.findIndex(s=>s.key===b.stage);
+    return ai - bi;
+  });
+
+  document.getElementById('detail-cl').innerHTML = orderedCl.length
+    ? orderedCl.map(p=>`
+      <div class="detail-cl-item">
+        ${logoImgHtml(p.team)}
+        <span class="detail-cl-team">${escapeHtml(p.team)}</span>
+        ${recapStageHtml(p.stage)}
+      </div>`).join('')
+    : '<div class="recap-empty">Pronostics C1 non renseignés.</div>';
+
+  document.getElementById('detail-foreign').innerHTML = FOREIGN_LEAGUES.map(l=>{
+    const value = recapForeignTeam(row,l.key);
+    return `<div class="detail-pick">
+      <span class="detail-pick-label">${escapeHtml(l.name)}</span>
+      <span class="detail-pick-value">${value ? recapTeamHtml(value) : '<span class="recap-muted">Non renseigné</span>'}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('detail-mercato').innerHTML = RECAP_MERCATO_CATS.map(([cat,label])=>{
+    const value = recapFreePick(row,cat);
+    return `<div class="detail-pick">
+      <span class="detail-pick-label">${escapeHtml(label)}</span>
+      <span class="detail-pick-value">${escapeHtml(value || 'Non renseigné')}</span>
+    </div>`;
+  }).join('');
+
+  const detail = document.getElementById('recap-detail');
+  detail.classList.remove('hidden');
+  setTimeout(()=>detail.scrollIntoView({behavior:'smooth',block:'start'}),20);
+}
+
+function closeRecapDetail(){
+  document.getElementById('recap-detail').classList.add('hidden');
+}
+
+document.getElementById('recap-search')?.addEventListener('input',renderRecapTable);
+document.getElementById('recap-refresh')?.addEventListener('click',async ()=>{
+  const btn = document.getElementById('recap-refresh');
+  btn.disabled = true;
+  btn.textContent = 'Actualisation…';
+  try{
+    await loadRecapData();
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Actualiser';
+  }
+});
+document.getElementById('recap-detail-close')?.addEventListener('click',closeRecapDetail);
+
+const originalBoot = boot;
+boot = async function(){
+  await originalBoot();
+  // Les données de recap sont chargées à la demande lors de l'ouverture de l'onglet.
+};
+
+document.querySelector('[data-tab="recap"]')?.addEventListener('click',async ()=>{
+  if(!recapLoaded) await loadRecapData();
+  else renderRecapTable();
+});
+
+/* ===================== GO ===================== */
+init();
+</script>
+</body>
+</html>
