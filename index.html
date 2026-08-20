@@ -1581,7 +1581,9 @@ function recapFreePick(row,cat){
 function renderRecapTable(){
   const tbody = document.getElementById('recap-tbody');
   const search = (document.getElementById('recap-search')?.value || '').trim().toLowerCase();
-  const filtered = recapParticipants.filter(r => r.pseudo.toLowerCase().includes(search));
+  const filtered = recapParticipants
+  .filter(r => !recapHiddenParticipants.has(r.pseudo))
+  .filter(r => r.pseudo.toLowerCase().includes(search));
 
   document.getElementById('recap-count').textContent =
     `${filtered.length} participant${filtered.length > 1 ? 's' : ''}`;
