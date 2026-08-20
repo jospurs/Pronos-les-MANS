@@ -779,8 +779,36 @@ const CL_STAGES = [
   { key: "poules", label: "Elimine en poules" }
 ];
 
-const CL_PRIORITY = ["Paris Saint-Germain","Lille","Monaco","Brest","Real Madrid","Barcelona","Arsenal"];
-const CL_OTHERS = ["Manchester City","Bayern Munich","Liverpool","Inter Milan","Borussia Dortmund","RB Leipzig","Bayer Leverkusen","Atlético Madrid","Atalanta","Juventus","Benfica","Club Brugge","Shakhtar Donetsk","Milan","Feyenoord","Sporting CP","PSV Eindhoven","Dinamo Zagreb","Red Bull Salzburg","Red Star Belgrade","Young Boys","Celtic","Slovan Bratislava","Sparta Prague","Aston Villa","Bologna","Girona","VfB Stuttgart","Sturm Graz"];
+const CL_PRIORITY = ["Paris Saint-Germain","Lille","Lens","Lyon","Real Madrid","Barcelona","Arsenal"];
+const CL_OTHERS = [
+  // Angleterre
+ "Manchester City","Manchester United","Aston Villa","Liverpool",
+  // Espagne
+ "Villarreal","Atlético Madrid","Real Betis",
+  // Italie
+  "Inter Milan","Napoli","Roma","Como",
+  // Allemagne
+  "Bayern Munich","Borussia Dortmund","RB Leipzig","VfB Stuttgart",
+ 
+  // Pays-Bas
+  "PSV Eindhoven","Feyenoord",
+  // Portugal
+  "Porto","Sporting CP",
+  // Belgique / Tchéquie / Turquie / Ukraine
+  "Club Brugge","Slavia Prague","Galatasaray","Shakhtar Donetsk"
+];
+
+// Places encore en barrage — projections au 20/08/2026.
+// AEK, Celtic, Dinamo Zagreb, Slovan Bratislava, Hapoel Beer-Sheva,
+// Fenerbahçe et Bodø/Glimt sont retenus comme hypothèses de qualification.
+const CL_PLAYOFF_PROJECTIONS = [
+  "AEK Athens",
+  "Celtic",
+  "Dinamo Zagreb",
+  "Slovan Bratislava",
+  "Hapoel Beer Sheva",
+"Bodø/Glimt"
+];
 const CL_CLUBS = [...CL_PRIORITY, ...CL_OTHERS];
 
 /* ---- Club logos (via the open-source luukhopman/football-logos repo, served through jsDelivr) ---- */
@@ -807,10 +835,19 @@ const LOGO_PATHS = {
   // Champions League clubs
   "Lille": "logos/France - Ligue 1/LOSC Lille.png",
   "Monaco": "logos/France - Ligue 1/AS Monaco.png",
-  "Brest": "logos/France - Ligue 1/Stade Brestois 29.png",
+  "Lyon": "logos/France - Ligue 1/Olympique Lyon.png",
   "Real Madrid": "logos/Spain - LaLiga/Real Madrid.png",
   "Barcelona": "logos/Spain - LaLiga/FC Barcelona.png",
   "Atlético Madrid": "logos/Spain - LaLiga/Atlético de Madrid.png",
+  "Real Betis": "logos/Spain - LaLiga/Real Betis.png",
+  "Napoli": "logos/Italy - Serie A/SSC Napoli.png",
+  "Roma": "logos/Italy - Serie A/AS Roma.png",
+  "Como": "logos/Italy - Serie A/Como 1907.png",
+  "Porto": "logos/Portugal - Liga Portugal/FC Porto.png",
+  "Slavia Prague": "logos/Czech Republic - Chance Liga/SK Slavia Prague.png",
+  "Galatasaray": "logos/Turkey - Super Lig/Galatasaray.png",
+  "Shakhtar Donetsk": "logos/Ukraine - Premier Liga/Shakhtar Donetsk.png",
+  "RC Lens": "logos/France - Ligue 1/RC Lens.png",
   "Girona": "history/2025-26/Spain - LaLiga/Girona FC.png",
   "Arsenal": "logos/England - Premier League/Arsenal FC.png",
   "Manchester City": "logos/England - Premier League/Manchester City.png",
@@ -838,7 +875,14 @@ const LOGO_PATHS = {
   "Red Star Belgrade": "logos/Serbia - Super liga Srbije/Red Star Belgrade.png",
   "Young Boys": "logos/Switzerland - Super League/BSC Young Boys.png",
   "Celtic": "logos/Scotland - Scottish Premiership/Celtic FC.png",
-  "Sparta Prague": "logos/Czech Republic - Chance Liga/AC Sparta Prague.png"
+  "Sparta Prague": "logos/Czech Republic - Chance Liga/AC Sparta Prague.png",
+   "AEK Athens": "logos/Greece - Super League/AEK Athens.png",
+  "Celtic": "logos/Scotland - Scottish Premiership/Celtic FC.png",
+  "Dinamo Zagreb": "logos/Croatia - SuperSport HNL/GNK Dinamo Zagreb.png",
+  "Slovan Bratislava": "logos/Slovakia - Niké Liga/Slovan Bratislava.png",
+  "Hapoel Beer Sheva": "logos/Israel - Ligat HaAl/Hapoel Be'er Sheva.png",
+  "Fenerbahçe": "logos/Turkey - Super Lig/Fenerbahce.png",
+  "Bodø/Glimt": "logos/Norway - Eliteserien/Bodo Glimt.png"
   // Slovan Bratislava: pas de logo disponible dans la source -> repli automatique sur les initiales
 };
 
