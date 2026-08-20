@@ -556,7 +556,302 @@ table.leaderboard tr:first-child td{color:var(--gold)}
   .cl-score-banner{grid-template-columns:1fr}
   .stat-card:last-child{grid-column:auto}
 }
+/* =========================
+   ADMINISTRATION
+   ========================= */
 
+.recap-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.admin-btn{
+  background:rgba(246,200,107,.08)!important;
+  border-color:rgba(246,200,107,.28)!important;
+  color:var(--gold)!important;
+}
+
+.admin-btn:hover{
+  background:rgba(246,200,107,.14)!important;
+}
+
+
+/* MODALE */
+
+.admin-modal{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding:20px;
+}
+
+.admin-modal-backdrop{
+  position:absolute;
+  inset:0;
+
+  background:rgba(0,0,0,.75);
+
+  backdrop-filter:blur(10px);
+}
+
+
+.admin-box{
+  position:relative;
+  z-index:1;
+
+  width:min(560px,100%);
+  max-height:90vh;
+  overflow:auto;
+
+  padding:24px;
+
+  background:#101a26;
+
+  border:1px solid var(--line);
+  border-radius:18px;
+
+  box-shadow:
+    0 30px 80px rgba(0,0,0,.55);
+}
+
+
+/* HEADER */
+
+.admin-head{
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+}
+
+.admin-head h3{
+  margin:0 0 6px;
+  font-size:20px;
+}
+
+.admin-head p{
+  margin:0;
+
+  color:var(--muted);
+
+  font-size:11px;
+  line-height:1.5;
+}
+
+
+.admin-close{
+  width:32px;
+  height:32px;
+
+  border-radius:8px;
+
+  border:1px solid var(--line);
+
+  background:rgba(255,255,255,.03);
+
+  color:var(--muted);
+
+  font-size:20px;
+
+  cursor:pointer;
+}
+
+
+/* CONNEXION */
+
+#recap-admin-login{
+  margin-top:24px;
+}
+
+#recap-admin-login label{
+  display:block;
+
+  margin-bottom:7px;
+
+  color:var(--muted);
+
+  font-size:9px;
+
+  text-transform:uppercase;
+  letter-spacing:.1em;
+
+  font-weight:800;
+}
+
+
+#recap-admin-password{
+  width:100%;
+
+  padding:12px;
+
+  margin-bottom:10px;
+
+  border-radius:8px;
+
+  border:1px solid var(--line);
+
+  background:#060c13;
+
+  color:var(--text);
+
+  font:inherit;
+
+  outline:none;
+}
+
+
+#recap-admin-password:focus{
+  border-color:var(--accent);
+}
+
+
+.admin-error{
+  margin-top:8px;
+
+  color:#ff6b6b;
+
+  font-size:10px;
+}
+
+
+/* COMPTEURS */
+
+.admin-summary{
+  display:flex;
+
+  gap:8px;
+
+  margin:20px 0 12px;
+}
+
+.admin-summary span{
+  flex:1;
+
+  padding:10px;
+
+  border:1px solid var(--line);
+
+  border-radius:9px;
+
+  background:rgba(255,255,255,.025);
+
+  color:var(--muted);
+
+  font-size:9px;
+
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.admin-summary b{
+  display:block;
+
+  margin-bottom:3px;
+
+  color:var(--text);
+
+  font-size:19px;
+}
+
+
+/* LISTE */
+
+.admin-list{
+  display:flex;
+
+  flex-direction:column;
+
+  gap:6px;
+
+  max-height:360px;
+
+  overflow:auto;
+}
+
+
+.admin-user{
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:12px;
+
+  padding:10px;
+
+  border:1px solid var(--line);
+
+  border-radius:9px;
+
+  background:rgba(0,0,0,.15);
+}
+
+
+.admin-user-name{
+  font-size:11px;
+  font-weight:800;
+}
+
+
+.admin-user-status{
+  margin-top:3px;
+
+  color:var(--muted);
+
+  font-size:8px;
+
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+
+.admin-user.hidden-user{
+  opacity:.65;
+}
+
+
+.admin-user.hidden-user
+.admin-user-name{
+  text-decoration:line-through;
+}
+
+
+.admin-user button{
+  padding:7px 10px;
+
+  font-size:8px;
+}
+
+
+.admin-note{
+  margin:13px 0;
+
+  color:var(--muted);
+
+  font-size:9px;
+
+  line-height:1.5;
+}
+
+
+@media(max-width:760px){
+
+  .recap-actions{
+    width:100%;
+    flex-direction:column;
+  }
+
+  .recap-actions .btn{
+    width:100%;
+  }
+
+}
 </style>
 </head>
 <body>
@@ -682,6 +977,10 @@ table.leaderboard tr:first-child td{color:var(--gold)}
           <p class="sub">Compare les choix de tous les participants. Clique sur une ligne pour ouvrir la fiche détaillée.</p>
         </div>
         <button class="btn ghost" id="recap-refresh" type="button">Actualiser</button>
+        <button class="btn admin-btn" id="recap-admin-open" type="button">
+    ⚙ Administration
+  </button>
+</div>
       </div>
 
       <div class="recap-toolbar">
@@ -762,7 +1061,14 @@ table.leaderboard tr:first-child td{color:var(--gold)}
       </div>
     </div>
   </section>
-
+<div id="recap-admin-modal" class="admin-modal hidden">
+    <div class="admin-modal-backdrop" id="recap-admin-backdrop"></div>
+    <div class="admin-box">
+      <div class="admin-head"><div><div class="eyebrow">Accès administrateur</div><h3>Gestion des participants</h3><p>Masquer un participant du récapitulatif sans supprimer ses pronostics.</p></div><button class="admin-close" id="recap-admin-close" type="button">×</button></div>
+      <div id="recap-admin-login"><label for="recap-admin-password">Mot de passe administrateur</label><input id="recap-admin-password" type="password" autocomplete="current-password" placeholder="••••••••"><button class="btn" id="recap-admin-login-btn" type="button">Accéder</button><div class="admin-error hidden" id="recap-admin-error">Mot de passe incorrect.</div></div>
+      <div id="recap-admin-panel" class="hidden"><div class="admin-summary"><span><b id="admin-visible-count">0</b> visibles</span><span><b id="admin-hidden-count">0</b> masqués</span></div><div id="recap-admin-list" class="admin-list"></div><p class="admin-note">Le masquage est enregistré sur cet appareil. Les pronostics Supabase ne sont pas supprimés.</p><button class="btn ghost" id="recap-admin-logout" type="button">Quitter le mode administrateur</button></div>
+    </div>
+  </div>
 </main>
 
 <script>
@@ -1400,6 +1706,547 @@ document.querySelector('[data-tab="recap"]')?.addEventListener('click',async ()=
 
 /* ===================== GO ===================== */
 init();
+  /* =========================
+   ADMINISTRATION RECAP
+   ========================= */
+
+
+/*
+ * MOT DE PASSE ADMIN
+ *
+ * À modifier ici.
+ */
+
+const ADMIN_PASSWORD = "admin2026";
+
+
+/*
+ * Les participants masqués sont enregistrés
+ * dans le navigateur.
+ */
+
+const ADMIN_HIDDEN_KEY =
+  "recap_hidden_participants";
+
+
+let recapAdminAuthenticated = false;
+
+let recapHiddenParticipants =
+  new Set();
+
+
+/*
+ * CHARGER LES PARTICIPANTS MASQUÉS
+ */
+
+function loadHiddenParticipants(){
+
+  try{
+
+    const saved =
+      JSON.parse(
+        localStorage.getItem(
+          ADMIN_HIDDEN_KEY
+        ) || "[]"
+      );
+
+    recapHiddenParticipants =
+      new Set(
+        Array.isArray(saved)
+          ? saved
+          : []
+      );
+
+  }catch(error){
+
+    recapHiddenParticipants =
+      new Set();
+
+  }
+
+}
+
+
+/*
+ * SAUVEGARDER LES PARTICIPANTS MASQUÉS
+ */
+
+function saveHiddenParticipants(){
+
+  localStorage.setItem(
+
+    ADMIN_HIDDEN_KEY,
+
+    JSON.stringify(
+      [...recapHiddenParticipants]
+    )
+
+  );
+
+}
+
+
+/*
+ * PARTICIPANTS VISIBLES
+ */
+
+function getVisibleRecapParticipants(){
+
+  return recapParticipants.filter(
+
+    participant =>
+      !recapHiddenParticipants.has(
+        participant.pseudo
+      )
+
+  );
+
+}
+
+
+/*
+ * OUVRIR LA FENÊTRE ADMIN
+ */
+
+function openRecapAdmin(){
+
+  const modal =
+    document.getElementById(
+      "recap-admin-modal"
+    );
+
+  modal.classList.remove("hidden");
+
+
+  document
+    .getElementById(
+      "recap-admin-password"
+    )
+    .value = "";
+
+
+  document
+    .getElementById(
+      "recap-admin-error"
+    )
+    .classList.add("hidden");
+
+
+  if(recapAdminAuthenticated){
+
+    showAdminPanel();
+
+  }else{
+
+    document
+      .getElementById(
+        "recap-admin-login"
+      )
+      .classList.remove("hidden");
+
+
+    document
+      .getElementById(
+        "recap-admin-panel"
+      )
+      .classList.add("hidden");
+
+  }
+
+}
+
+
+/*
+ * FERMER LA FENÊTRE
+ */
+
+function closeRecapAdmin(){
+
+  document
+    .getElementById(
+      "recap-admin-modal"
+    )
+    .classList.add("hidden");
+
+}
+
+
+/*
+ * CONNEXION ADMIN
+ */
+
+function loginRecapAdmin(){
+
+  const password =
+    document.getElementById(
+      "recap-admin-password"
+    ).value;
+
+
+  if(password !== ADMIN_PASSWORD){
+
+    document
+      .getElementById(
+        "recap-admin-error"
+      )
+      .classList.remove("hidden");
+
+    return;
+
+  }
+
+
+  recapAdminAuthenticated = true;
+
+  showAdminPanel();
+
+}
+
+
+/*
+ * AFFICHER LE PANNEAU ADMIN
+ */
+
+function showAdminPanel(){
+
+  document
+    .getElementById(
+      "recap-admin-login"
+    )
+    .classList.add("hidden");
+
+
+  document
+    .getElementById(
+      "recap-admin-panel"
+    )
+    .classList.remove("hidden");
+
+
+  renderAdminUsers();
+
+}
+
+
+/*
+ * AFFICHER LA LISTE DES PARTICIPANTS
+ */
+
+function renderAdminUsers(){
+
+  const list =
+    document.getElementById(
+      "recap-admin-list"
+    );
+
+
+  const participants =
+    [...recapParticipants].sort(
+
+      (a,b) =>
+        a.pseudo.localeCompare(
+          b.pseudo,
+          "fr",
+          {
+            sensitivity:"base"
+          }
+        )
+
+    );
+
+
+  const visible =
+    participants.filter(
+
+      participant =>
+        !recapHiddenParticipants.has(
+          participant.pseudo
+        )
+
+    ).length;
+
+
+  const hidden =
+    participants.length -
+    visible;
+
+
+  document
+    .getElementById(
+      "admin-visible-count"
+    )
+    .textContent = visible;
+
+
+  document
+    .getElementById(
+      "admin-hidden-count"
+    )
+    .textContent = hidden;
+
+
+  if(!participants.length){
+
+    list.innerHTML = `
+      <div class="recap-empty">
+        Aucun participant trouvé.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  list.innerHTML =
+    participants.map(
+
+      participant => {
+
+        const pseudo =
+          participant.pseudo;
+
+
+        const isHidden =
+          recapHiddenParticipants.has(
+            pseudo
+          );
+
+
+        return `
+
+          <div
+            class="admin-user
+            ${isHidden
+              ? "hidden-user"
+              : ""}"
+          >
+
+            <div>
+
+              <div class="admin-user-name">
+                ${escapeHtml(pseudo)}
+              </div>
+
+              <div class="admin-user-status">
+
+                ${
+                  isHidden
+                    ? "Masqué du récapitulatif"
+                    : "Visible dans le récapitulatif"
+                }
+
+              </div>
+
+            </div>
+
+
+            <button
+              class="btn
+              ${isHidden
+                ? ""
+                : "ghost"}"
+              type="button"
+              data-admin-pseudo="${escapeHtml(pseudo)}"
+            >
+
+              ${
+                isHidden
+                  ? "Réafficher"
+                  : "Masquer"
+              }
+
+            </button>
+
+          </div>
+
+        `;
+
+      }
+
+    ).join("");
+
+
+  /*
+   * ACTIONS MASQUER / RÉAFFICHER
+   */
+
+  list
+    .querySelectorAll(
+      "[data-admin-pseudo]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const pseudo =
+            button.dataset.adminPseudo;
+
+
+          if(
+            recapHiddenParticipants
+              .has(pseudo)
+          ){
+
+            recapHiddenParticipants
+              .delete(pseudo);
+
+          }else{
+
+            recapHiddenParticipants
+              .add(pseudo);
+
+          }
+
+
+          saveHiddenParticipants();
+
+
+          renderAdminUsers();
+
+
+          /*
+           * On actualise le tableau
+           */
+
+          renderRecapTable();
+
+
+          /*
+           * Si la fiche de cette personne
+           * était ouverte, on la ferme.
+           */
+
+          const detailName =
+            document
+              .getElementById(
+                "recap-detail-name"
+              )
+              ?.textContent;
+
+
+          if(
+            detailName === pseudo &&
+            recapHiddenParticipants.has(
+              pseudo
+            )
+          ){
+
+            closeRecapDetail();
+
+          }
+
+        }
+
+      );
+
+    });
+
+}
+
+
+/*
+ * INITIALISATION
+ */
+
+loadHiddenParticipants();
+
+
+/*
+ * BOUTON ADMIN
+ */
+
+document
+  .getElementById(
+    "recap-admin-open"
+  )
+  ?.addEventListener(
+    "click",
+    openRecapAdmin
+  );
+
+
+/*
+ * FERMETURE
+ */
+
+document
+  .getElementById(
+    "recap-admin-close"
+  )
+  ?.addEventListener(
+    "click",
+    closeRecapAdmin
+  );
+
+
+document
+  .getElementById(
+    "recap-admin-backdrop"
+  )
+  ?.addEventListener(
+    "click",
+    closeRecapAdmin
+  );
+
+
+/*
+ * CONNEXION
+ */
+
+document
+  .getElementById(
+    "recap-admin-login-btn"
+  )
+  ?.addEventListener(
+    "click",
+    loginRecapAdmin
+  );
+
+
+/*
+ * ENTER DANS LE MOT DE PASSE
+ */
+
+document
+  .getElementById(
+    "recap-admin-password"
+  )
+  ?.addEventListener(
+    "keydown",
+    event => {
+
+      if(event.key === "Enter"){
+
+        loginRecapAdmin();
+
+      }
+
+    }
+  );
+
+
+/*
+ * LOGOUT
+ */
+
+document
+  .getElementById(
+    "recap-admin-logout"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+
+      recapAdminAuthenticated =
+        false;
+
+      closeRecapAdmin();
+
+    }
+  );
 </script>
 </body>
 </html>
