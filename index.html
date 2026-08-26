@@ -880,6 +880,7 @@ table.leaderboard tr:first-child td{color:var(--gold)}
     <nav class="tabs">
       <button class="tab-btn active" data-tab="l1">Classement Ligue 1</button>
       <button class="tab-btn" data-tab="cl">Pronos Ligue des Champions</button>
+      <button class="tab-btn" data-tab="el">Pronos Europa League</button>
       <button class="tab-btn" data-tab="foreign">Pronos Championnats Étrangers</button>
       <button class="tab-btn" data-tab="mercato">Prédictions libres</button>
       <button class="tab-btn" data-tab="recap">Récapitulatif</button>
@@ -906,6 +907,14 @@ table.leaderboard tr:first-child td{color:var(--gold)}
       <ul class="drag-list" id="cl-list"></ul>
     </div>
   </section>
+  <!-- EUROPA LEAGUE TAB -->
+<section id="tab-el" class="tab-panel hidden">
+  <div class="panel">
+    <h2>Parcours Europa League</h2>
+    <p class="sub">Pour chaque club, estime son parcours en Europa League. Tu peux réordonner la liste. Pronostic personnel à ton pseudo.</p>
+    <ul class="drag-list" id="el-list"></ul>
+  </div>
+</section>
 
   <!-- FOREIGN LEAGUES TAB -->
   <section id="tab-foreign" class="tab-panel hidden">
@@ -1117,6 +1126,7 @@ const CL_PLAYOFF_PROJECTIONS = [
 "Bodø/Glimt"
 ];
 const CL_CLUBS = [...CL_PRIORITY, ...CL_OTHERS,...CL_PLAYOFF_PROJECTIONS];
+  const EL_CLUBS = ["Lyon","Marseille","Rennes","Juventus","Milan AC"];
 
 /* ---- Club logos (via the open-source luukhopman/football-logos repo, served through jsDelivr) ---- */
 const LOGO_PATHS = {
@@ -1413,7 +1423,63 @@ function initCLSortable(){
     }
   });
 }
+/* ===================== EUROPA LEAGUE (parcours par club) ===================== */
+let elPicks = [];
+let elSortable = null;
 
+async function loadAndRenderEL(){
+  const stored = (await sGet('el_stage_picks_'+pseudo, true)) || [];
+  const validTeams = new Set(EL_CLUBS);
+  let merged = stored.filter(p => validTeams.has(p.team));
+  const known = new Set(merged.map(p => p.team));
+  EL_CLUBS.forEach(team => { if(!known.has(team)){ merged.push({ team, stage: '' }); } });
+  elPicks = merged;
+  await sSet('el_stage_picks_'+pseudo, elPicks, true);
+  renderELList();
+  initELSortable();
+}
+
+function renderELList(){
+  const ul = document.getElementById('el-list');
+  ul.innerHTML = elPicks.map((p)=>`
+    <li class="drag-item" data-team="${p.team}">
+      <span class="handle">⠿⠿</span>
+      ${logoImgHtml(p.team)}
+      <span class="team-name">${p.team}</span>
+      <select class="stage-select ${p.stage?'stage-'+p.stage:''}" data-team="${p.team}">
+        <option value="" ${p.stage===''?'selected':''}>— Choisir —</option>
+        ${CL_STAGES.map(s=>`<option value="${s.key}" ${p.stage===s.key?'selected':''}>${s.label}</option>`).join('')}
+      </select>
+    </li>`).join('');
+
+  ul.querySelectorAll('.stage-select').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      const team = sel.dataset.team;
+      const pick = elPicks.find(p=>p.team===team);
+      if(pick){ pick.stage = sel.value; }
+      sel.className = 'stage-select' + (sel.value ? ' stage-'+sel.value : '');
+      await sSet('el_stage_picks_'+pseudo, elPicks, true);
+    });
+  });
+}
+
+function initELSortable(){
+  const ul = document.getElementById('el-list');
+  if(elSortable){ elSortable.destroy(); }
+  elSortable = new Sortable(ul, {
+    animation:150,
+    handle:'.handle',
+    ghostClass:'sortable-ghost',
+    chosenClass:'sortable-chosen',
+    dragClass:'sortable-drag',
+    onEnd: async ()=>{
+      const items = ul.querySelectorAll('.drag-item');
+      const newOrder = Array.from(items).map(li=>li.dataset.team);
+      elPicks = newOrder.map(team => elPicks.find(p=>p.team===team));
+      await sSet('el_stage_picks_'+pseudo, elPicks, true);
+    }
+  });
+}
 /* ===================== CHAMPIONNATS ÉTRANGERS ===================== */
 let foreignPicks = {};
 
