@@ -1126,6 +1126,8 @@ const CL_PLAYOFF_PROJECTIONS = [
 "Bodø/Glimt"
 ];
 const CL_CLUBS = [...CL_PRIORITY, ...CL_OTHERS,...CL_PLAYOFF_PROJECTIONS];
+
+  
   const EL_CLUBS = ["Lyon","Marseille","Rennes","Juventus","Milan AC"];
 
 /* ---- Club logos (via the open-source luukhopman/football-logos repo, served through jsDelivr) ---- */
@@ -1201,7 +1203,7 @@ const LOGO_PATHS = {
   "Dinamo Zagreb": "logos/Croatia - SuperSport HNL/GNK Dinamo Zagreb.png",
   "Slovan Bratislava": "logos/Slovakia - Niké Liga/Slovan Bratislava.png",
   "Hapoel Beer Sheva": "logos/Israel - Ligat HaAl/Hapoel Be'er Sheva.png",
-  "Fenerbahçe": "logos/Turkey - Super Lig/Fenerbahce.png",
+  "Fenerbahçe": "logos/Turkey - Super Lig/Fenerbahçe.png",
   "Bodø/Glimt": "logos/Norway - Eliteserien/FK BodøGlimt.png",
     "Sabah Baku": "https://assets.football-logos.cc/logos/azerbaijan/1500x1500/sabah.ae157c62.png",
   "Slovan Bratislava": "https://assets.football-logos.cc/logos/slovakia/1500x1500/s-bratislava.506a4949.png",
@@ -1322,6 +1324,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 async function boot(){
   await loadAndRenderL1();
   await loadAndRenderCL();
+   await loadAndRenderEL();  
   await loadAndRenderForeign();
   renderMercatoTab();
 }
